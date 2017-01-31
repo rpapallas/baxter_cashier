@@ -1,0 +1,10 @@
+<package>
+  <description brief="human_robot_interaction_for_cashier_robot">
+  	Human-Robot Interaction for Cashier Robot is a Final Year Project at the
+  	University of Leeds.
+  </description>
+  <author>The University of Leeds and Rafael Papallas</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/human_robot_interaction_for_cashier_robot</url>
+</package>
