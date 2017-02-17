@@ -1,7 +1,7 @@
 Introduction
 ============
 
-This repository host the "Human-Robot Interaction for Cashier Robot for Baxter Robot", a final year project at the University of Leeds. 
+This repository host the "Human-Robot Interaction for Cashier Robot for Baxter Robot" project, a final year project at the University of Leeds. 
 
 Although this project can possibly be improved, this is the final version submited as part of my dissertation and hence I will not consider any pull requests for changes, since I would like to keep the project at the state it has been submitted. Feel free though to have a walk around.
 
