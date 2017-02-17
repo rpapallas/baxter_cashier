@@ -12,6 +12,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 Table of Contents
 =================
 
+  * [Introduction](#introduction)
   * [Table of Contents](#table-of-contents)
   * [About The Project](#about-the-project)
   * [Installation](#installation)
