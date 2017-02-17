@@ -63,7 +63,7 @@ Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_par
 Running
 =======
 
-Run just the Skeleton Tracker
+(Optional) Run just the Skeleton Tracker
 -----------------------------
 To run the skeleton tracker individually, here are the steps required (in separate terminal windows):
 ```
