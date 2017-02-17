@@ -36,6 +36,8 @@ from geometry_msgs.msg import (
 from std_msgs.msg import Header
 from baxter_interface import CHECK_VERSION 
 
+import tf
+
 from baxter_core_msgs.srv import (
     SolvePositionIK,
     SolvePositionIKRequest,
@@ -82,7 +84,7 @@ class Shopkeeper:
         configuration of the limb.
         '''
         limb = self.get_limb_for_side(limb_side)
-        self.set_neutral_position_of_limb(limb)
+        # self.set_neutral_position_of_limb(limb)
 
         ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
@@ -203,7 +205,8 @@ def main():
     baxter = Shopkeeper()
     poses = baxter.get_poses_from_space()
     joint_configurations = baxter.inverse_kinematic_solver(args.limb, poses)
-    baxter.move_limb_to_position(args.limb, joint_configurations)
+    if joint_configurations is not None:
+        baxter.move_limb_to_position(args.limb, joint_configurations)
 
 if __name__ == '__main__':
     sys.exit(main())
