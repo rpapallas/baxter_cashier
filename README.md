@@ -1,6 +1,13 @@
-**Note 1:** This repository is hosting a Final Year Project at the University of Leeds. This project is in progress and hence the code is not final.
+Introduction
+============
 
-**Note 2:** This repository possibly can be improved, but this is the final version submited as part of my dissertation and hence I will not consider any pull requests for changes. Feel free though to have a walk around.
+This repository host the "Human-Robot Interaction for Cashier Robot for Baxter Robot", a final year project at the University of Leeds. 
+
+Although this project can possibly be improved, this is the final version submited as part of my dissertation and hence I will not consider any pull requests for changes, since I would like to keep the project at the state it has been submitted. Feel free though to have a walk around.
+
+This project is **not** under active development.
+
+Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Python2.
 
 Table of Contents
 =================
