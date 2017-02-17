@@ -1,13 +1,13 @@
 Introduction
 ============
 
-This repository host the "Human-Robot Interaction for Cashier Robot for Baxter Robot" project, a final year project at the University of Leeds. 
+This repository host the "Human-Robot Interaction for Cashier Robot" project, a undergraduate final year project at the School of Computing, University of Leeds. 
 
 Although this project can possibly be improved, this is the final version submited as part of my dissertation and hence I will not consider any pull requests for changes, since I would like to keep the project at the state it has been submitted. Feel free though to have a walk around.
 
 This project is **not** under active development.
 
-Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Python2.
+Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Python2. The robot used was [Baxter Robot](http://www.rethinkrobotics.com/baxter/) by Rethink Robotics.
 
 Table of Contents
 =================
