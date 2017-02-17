@@ -115,20 +115,33 @@ class Shopkeeper:
         '''
         hdr = Header(stamp=rospy.Time.now(), frame_id='base')
 
+        listener = tf.TransformListener()
+
+        rate = rospy.Rate(0.1)
+        while not rospy.is_shutdown():
+            try:
+                (trans,rot) = listener.lookupTransform('/camera_depth_optical_frame', 'cob_body_tracker/user_1/left_hand', rospy.Time(0))
+                print str(trans) + ", " + str(rot)
+                break
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+
+            rate.sleep()
+
         poses = {
             'left': PoseStamped(
                 header=hdr,
                 pose=Pose(
                     position=Point(
-                        x=0.657579481614,
-                        y=0.451981417433,
-                        z=0.2388352386502,
+                        x=trans[0],
+                        y=trans[1],
+                        z=trans[2],
                     ),
                     orientation=Quaternion(
-                        x=-0.366894936773,
-                        y=0.885980397775,
-                        z=0.108155782462,
-                        w=0.262162481772,
+                        x=rot[0],
+                        y=rot[1],
+                        z=rot[2],
+                        w=rot[3],
                     ),
                 ),
             ),
