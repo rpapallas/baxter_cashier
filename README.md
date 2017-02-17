@@ -9,6 +9,8 @@ This project is **not** under active development.
 
 Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Python2. The robot used was [Baxter Robot](http://www.rethinkrobotics.com/baxter/) by Rethink Robotics.
 
+![Baxter](https://cloud.githubusercontent.com/assets/6514550/23082358/ef6cd810-f550-11e6-9088-c54a4a1f7a3b.png)
+
 Table of Contents
 =================
 
