@@ -4,13 +4,13 @@ Table of Contents
 =================
 
   * [Table of Contents](#table-of-contents)
-  * [About The Project](#About_The_Project)
+  * [About The Project](#About-The-Project)
   * [Installation](#installation)
     * [Prerequisites](#Prerequisites)
-    * [Clone Project](#Clone_Project)
-    * [Important `cob_people_perception` modification](Important_cob_people_perception_modification)
+    * [Clone Project](#Clone-Project)
+    * [Important `cob_people_perception` modification](Important-cob-people-perception-modification)
   * [Running](#Running)
-    * [Run just the Skeleton Tracker](#Run_just_the_Skeleton_Tracker)
+    * [Run just the Skeleton Tracker](#Run-just-the-Skeleton-Tracker)
 
 About The Project
 =================
