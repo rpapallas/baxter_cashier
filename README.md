@@ -10,7 +10,7 @@ Table of Contents
     * [Clone Project](#clone-project)
     * [Important `cob_people_perception` modification](#important-cob-people-perception-modification)
   * [Running](#Running)
-    * [Run just the Skeleton Tracker](#run-just-the-skeleton-tracker)
+    * [Run just the Skeleton Tracker](#optional-run-just-the-skeleton-tracker)
 
 About The Project
 =================
