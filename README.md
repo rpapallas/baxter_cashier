@@ -1,4 +1,6 @@
-**Note:** This repository is hosting a Final Year Project at the University of Leeds. This project is in progress and hence the code is not final.
+**Note 1:** This repository is hosting a Final Year Project at the University of Leeds. This project is in progress and hence the code is not final.
+
+**Note 2:** This repository possibly can be improved, but this is the final version submited as part of my dissertation and hence I will not consider any pull requests for changes. Feel free though to have a walk around.
 
 Table of Contents
 =================
