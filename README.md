@@ -8,7 +8,7 @@ Table of Contents
   * [Installation](#installation)
     * [Prerequisites](#Prerequisites)
     * [Clone Project](#Clone-Project)
-    * [Important `cob_people_perception` modification](Important-cob-people-perception-modification)
+    * [Important `cob_people_perception` modification](#Important-cob-people-perception-modification)
   * [Running](#Running)
     * [Run just the Skeleton Tracker](#Run-just-the-Skeleton-Tracker)
 
