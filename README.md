@@ -36,6 +36,8 @@ Installation
 
 Prerequisites
 -------------
+- Install [ROS Indigo](http://wiki.ros.org/indigo/Installation)
+- Install [Baxter SDK](http://sdk.rethinkrobotics.com/wiki/Workstation_Setup)
 - Install Openni2
 ```
 sudo apt-get install ros-indigo-openni2-launch
