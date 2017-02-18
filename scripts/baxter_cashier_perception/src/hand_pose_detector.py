@@ -46,6 +46,7 @@ class BodyTrackerListener:
         rospy.init_node("body_tracker_listener")
         self._listener = tf.TransformListener()
         self._RATE = rospy.Rate(0.3)
+        self.listen_thread = None
 
         # These two will be updated when listen_for method is called.
         self.transformation = None
@@ -64,7 +65,7 @@ class BodyTrackerListener:
 
         return True if body_part in possible_body_parts else False
 
-    def start_listening_for(self, user_number, body_part):
+    def start_listening_for(self, user_number, body_part, sec_to_listen):
         # Throw an exception if body part not valid
         if not self._is_body_part_valid(body_part):
             try:
@@ -72,9 +73,13 @@ class BodyTrackerListener:
             except InvalidBodyPartException as e:
                 print e
 
-        thread = threading.Thread(target=self._listen, args=(user_number, body_part))
-        thread.daemon = True                              # Daemonise thread
-        thread.start()                                    # Start the execution
+        self.listen_thread = threading.Thread(target=self._listen, args=(user_number, body_part))
+
+        # By setting them as daemon threads, you can let them run and forget
+        # about them, and when your program quits, any daemon threads
+        # are killed automatically.
+        thread.daemon = True
+        thread.start()
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
@@ -92,7 +97,6 @@ class BodyTrackerListener:
                 print e
 
             _RATE.sleep()
-
 
 if __name__ == '__main__':
     tracker_listener = BodyTrackerListener()
