@@ -17,6 +17,7 @@ Table of Contents
   * [Introduction](#introduction)
   * [Table of Contents](#table-of-contents)
   * [About The Project](#about-the-project)
+    * [How the repository is organised](#how-the-repository-is-organised)
   * [Installation](#installation)
     * [Prerequisites](#prerequisites)
     * [Clone Project](#clone-project)
@@ -32,6 +33,18 @@ This project is focusing on developing packages and algorithms for Baxter Robot 
 This involves several aspects:
 - Perception: Skeleton Tracking to identify hand-pose of the customer.
 - Manipulation: Baxter to get and give money to the customer's hand.
+
+How the repository is organised
+-------------------------------
+This repository makes use of most of the project managment features provided by GitHub. Including, issues, milestones, projects/boards.
+
+* Project's [milestones](https://github.com/papallas/baxter_cashier/milestones).
+* Project's [issues](https://github.com/papallas/baxter_cashier/issues).
+* Project's [boards](https://github.com/papallas/baxter_cashier/projects) per phase (up to three).
+
+By the end of the project probably most of the issues will be closed and hence you need to find the closed issues. Alternative, the Project's boards allows you to see the phase's issues under four columns (Someday/Maybe, To Do, In Progress and Done). Note that the issues/notes under Someday/Maybe are ideas or suggestions that are not of priority but will be good if implemented, however is not guaranteed that will ever be implemented.
+
+Milestones are great way to visualise the project in different phases and issues are assigned to phases.
 
 Installation
 ============
