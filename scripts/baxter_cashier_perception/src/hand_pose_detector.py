@@ -1,7 +1,26 @@
 #!/usr/bin/env python
-# cob_body_tracker/user_1/left_elbow
-# cob_body_tracker/user_1/left_hand
-# cob_body_tracker/user_1/left_shoulder
+"""
+This script acts as a listener to the Skeleton Tracker provided by the
+cob_people_perception library. It listens to a specific frame of the
+user's hand and returns the pose to the caller.
+
+It uses threads to execute the job so it does not hold other code calling
+this class.
+
+The cob_people_perception library publishes the tf frames in the following
+manner:
+- Parent: /camera_depth_optical_frame
+- Childs: /cob_body_tracker/user_n/{x}
+  - Where n is the number of the user (1, 2, 3 etc)
+  - Where x is the body part with possible options:
+    - Shoulders: left_shoulder, right_shoulder
+    - Elbows: left_elbow, right_elbow
+    - Hands: left_hand, right_hand
+    - Hips: left_hip, right_hip
+    - Knees: left_knee, right_knee
+    - Feet: left_foot, right_foot
+    - Other: head, neck, torso
+"""
 
 import roslib
 import rospy
