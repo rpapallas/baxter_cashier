@@ -20,8 +20,8 @@ Table of Contents
   * [Installation](#installation)
     * [Prerequisites](#prerequisites)
     * [Clone Project](#clone-project)
-    * [Important `cob_people_perception` modification](#important-cob-people-perception-modification)
-  * [Running](#Running)
+    * [Important `cob_people_perception` modification](#important-cob_people_perception-modification)
+  * [Running](#running)
     * [Run just the Skeleton Tracker](#optional-run-just-the-skeleton-tracker)
 
 About The Project
