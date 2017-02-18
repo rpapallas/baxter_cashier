@@ -24,21 +24,84 @@ manner:
 
 import roslib
 import rospy
-import math
 import tf
-import geometry_msgs.msg
+from threading import Thread
+import time
+
+class InvalidBodyPartException(Exception):
+    """
+    Raises exception if the body part string provided by the user is
+    not a valid one (i.e not provided by the skeleton tracker)
+    """
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return """ The provided body part {} is not a valid body part
+               for the skeleton tracker.""".format(self.value)
+
+class BodyTrackerListener:
+    def __init__(self):
+        # General default configuration for the listener
+        rospy.init_node("body_tracker_listener")
+        self._listener = tf.TransformListener()
+        self._RATE = rospy.Rate(0.3)
+
+        # These two will be updated when listen_for method is called.
+        self.transformation = None
+        self.rotation = None
+
+    def _is_body_part_valid(self, body_part):
+        """
+        Given a body_part will return true if the part is valid or
+        false if is invalid.
+        """
+        possible_body_parts = ['head', 'neck', 'torso', 'left_shoulder',
+                               'right_shoulder', 'left_elbow', 'right_elbow',
+                               'left_hand', 'right_hand', 'left_hip',
+                               'right_hip', 'left_knee', 'right_knee',
+                               'left_foot', 'right_foot']
+
+        return True if body_part in possible_body_parts else False
+
+    def start_listening_for(self, user_number, body_part):
+        # Throw an exception if body part not valid
+        if not self._is_body_part_valid(body_part):
+            try:
+                raise InvalidBodyPartException(body_part)
+            except InvalidBodyPartException as e:
+                print e
+
+        thread = threading.Thread(target=self._listen, args=(user_number, body_part))
+        thread.daemon = True                              # Daemonise thread
+        thread.start()                                    # Start the execution
+
+    def _listen(self, user_number, body_part):
+        # Source is the node parent and target the child we are looking for.
+        source = '/camera_depth_optical_frame'
+        target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
+
+        while not rospy.is_shutdown():
+            try:
+                # Try to listen for the transformation and rotation of the node
+                (transformation, rotation) = _listener.lookupTransform(source, target, rospy.Time(0))
+                self.transformation = transformation
+                self.rotation = rotation
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException) as e:
+                print e
+
+            _RATE.sleep()
+
 
 if __name__ == '__main__':
-    rospy.init_node('hand_pose_detector')
+    tracker_listener = BodyTrackerListener()
+    tracker_listener.start_listening_for(user_number=1, body_part="left_hand")
 
-    listener = tf.TransformListener()
+    time.sleep(10)
 
-    rate = rospy.Rate(0.1)
-    while not rospy.is_shutdown():
-        try:
-            (trans,rot) = listener.lookupTransform('/camera_depth_optical_frame', 'cob_body_tracker/user_1/left_hand', rospy.Time(0))
-            print str(trans) + ", " + str(rot)
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
-
-        rate.sleep()
+    if tracker_listener.transformation is not None and tracker_listener.rotation is not None:
+        print "Transformation: {}".format(tracker_listener.transformation)
+        print "Rotation: {}".format(tracker_listener.rotation)
+    else:
+        print "Nothing listened."
