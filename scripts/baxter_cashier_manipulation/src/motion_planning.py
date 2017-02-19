@@ -25,7 +25,7 @@ import rospy
 
 import baxter_interface
 import baxter_external_devices
- 
+
 from geometry_msgs.msg import (
     PoseStamped,
     Pose,
@@ -34,7 +34,7 @@ from geometry_msgs.msg import (
 )
 
 from std_msgs.msg import Header
-from baxter_interface import CHECK_VERSION 
+from baxter_interface import CHECK_VERSION
 
 import tf
 
@@ -95,17 +95,31 @@ class Shopkeeper:
         try:
             rospy.wait_for_service(ns, 5.0)
             resp = iksvc(ikreq)
-
-            if (resp.isValid[0]):
-                print("Valid Joint Solution Found")
-                # Format solution into Limb API-compatible dictionary
-                limb_joints = dict(zip(resp.joints[0].name,
-                                       resp.joints[0].position))
-                return limb_joints
-            else:
-                print("No Valid Joint Solution Found.")
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Service call failed: %s" % (e,))
+
+        if (resp.isValid[0]):
+            print("Valid Joint Solution Found")
+            # Format solution into Limb API-compatible dictionary
+            limb_joints = dict(zip(resp.joints[0].name,
+                                   resp.joints[0].position))
+            return limb_joints
+        else:
+            for counter in xrange(50):
+                try:
+                    resp = self.iksvc(ikreq)
+                except (rospy.ServiceException, rospy.ROSException), e:
+                    rospy.logerr("Service call failed: %s" % (e,))
+                    return False
+
+            if any(resp.isValid):
+                for i in range(len(resp.isValid)):
+                    if resp.isValid[i]:
+                        print("Valid Joint Solution Found (2)")
+                        limb_joints = dict(zip(resp.joints[i].name,
+                            resp.joints[i].position))
+
+                        return limb_joints
 
         return None
 
