@@ -98,28 +98,17 @@ class Shopkeeper:
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Service call failed: %s" % (e,))
 
-        if (resp.isValid[0]):
+        if any(resp.isValid):
             print("Valid Joint Solution Found")
-            # Format solution into Limb API-compatible dictionary
-            limb_joints = dict(zip(resp.joints[0].name,
-                                   resp.joints[0].position))
-            return limb_joints
+
+            for i in range(len(resp.isValid)):
+                if resp.isValid[i]:
+                    # Format solution into Limb API-compatible dictionary
+                    limb_joints = dict(zip(resp.joints[0].name,
+                                           resp.joints[0].position))
+                    return limb_joints
         else:
-            for counter in xrange(50):
-                try:
-                    resp = self.iksvc(ikreq)
-                except (rospy.ServiceException, rospy.ROSException), e:
-                    rospy.logerr("Service call failed: %s" % (e,))
-                    return False
-
-            if any(resp.isValid):
-                for i in range(len(resp.isValid)):
-                    if resp.isValid[i]:
-                        print("Valid Joint Solution Found (2)")
-                        limb_joints = dict(zip(resp.joints[i].name,
-                            resp.joints[i].position))
-
-                        return limb_joints
+            print "No solution found."
 
         return None
 
@@ -133,7 +122,7 @@ class Shopkeeper:
 
         listener = tf.TransformListener()
 
-        rate = rospy.Rate(0.1)
+        rate = rospy.Rate(1.0)
         while not rospy.is_shutdown():
             try:
                 (trans,rot) = listener.lookupTransform('/camera_depth_optical_frame', 'cob_body_tracker/user_1/left_hand', rospy.Time(0))
