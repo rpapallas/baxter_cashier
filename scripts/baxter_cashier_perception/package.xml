@@ -4,10 +4,10 @@
   <version>0.0.0</version>
   <description>The baxter_cashier_perception package</description>
 
-  <!-- One maintainer tag required, multiple allowed, one person per tag --> 
+  <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="rafael@todo.todo">rafael</maintainer>
+  <maintainer email="sc13rp@leeds.ac.uk">Rafael Papallas</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -47,6 +47,18 @@
   <run_depend>rospy</run_depend>
   <run_depend>tf</run_depend>
 
+  <!-- picture_listener.py dependencies -->
+  <build_depend>sensor_msgs</build_depend>
+  <run_depend>sensor_msgs</run_depend>
+
+  <build_depend>opencv2</build_depend>
+  <run_depend>opencv2</run_depend>
+
+  <build_depend>cv_bridge</build_depend>
+  <run_depend>cv_bridge</run_depend>
+
+  <build_depend>std_msgs</build_depend>
+  <run_depend>std_msgs</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
