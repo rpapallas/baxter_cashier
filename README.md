@@ -58,11 +58,11 @@ Prerequisites
 sudo apt-get install ros-indigo-openni2-launch
 sudo apt-get install ros-indigo-openni2-camera
 ```
-- Install `cob_people_perception` library:
+- Install [`cob_people_perception`](https://github.com/ipa-rmb/cob_people_perception) and [`cob_perception_common`](https://github.com/ipa-rmb/cob_perception_common) library:
 ```
 cd ~/catkin_ws/src
 
-git clone git@github.com:papallas/cob_people_perception.git
+git clone git@github.com:ipa-rmb/cob_people_perception.git
 cd cob_people_perception
 rosdep install -r --from-paths .
 
