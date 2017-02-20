@@ -73,7 +73,7 @@ rosdep install -r --from-paths .
 cd ~/catkin_ws
 catkin_make
 ```
-- Install `cv_bridge` and `vision_opencv` required for the perception part of the project:
+- Install [`cv_bridge`](http://wiki.ros.org/cv_bridge) and [`vision_opencv`](http://wiki.ros.org/vision_opencv) required for the perception part of the project:
 ```
 sudo apt-get install ros-indigo-cv-bridge
 sudo apt-get install ros-indigo-vision-opencv
