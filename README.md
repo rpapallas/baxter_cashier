@@ -78,6 +78,10 @@ catkin_make
 sudo apt-get install ros-indigo-cv-bridge
 sudo apt-get install ros-indigo-vision-opencv
 ```
+- Install `imutils`
+```
+sudo pip install imutils
+```
 
 Clone Project
 -------------
