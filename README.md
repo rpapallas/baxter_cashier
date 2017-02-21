@@ -84,7 +84,7 @@ cd ~/catkin_ws
 catkin_make
 ```
 
-**Important `cob_people_perception` modification**
+**Important `cob_people_perception` modification**  
 `cob_people_perception` project provides a pacakage called `cob_openni2_tracker` which as the name implies, allows us to have a skeleton tracker. However, if we need to get `tf`s broadcasted we need to make an alteration to the `.yaml` file of the pacakge.
 
 Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
