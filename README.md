@@ -21,7 +21,6 @@ Table of Contents
   * [Installation](#installation)
     * [Prerequisites](#prerequisites)
     * [Clone Project](#clone-project)
-    * [Important `cob_people_perception` modification](#important-cob_people_perception-modification)
   * [Money Bills](#money-bills)
     * [Edit Templates](#edit-templates)
     * [Print bills](#print-bills)
@@ -52,6 +51,8 @@ Milestones are great way to visualise the project in different phases and issues
 Installation
 ============
 
+This section describes what you need to install so you can have the project running on Baxter or the Gazebo simulator.
+
 Prerequisites
 -------------
 - Install [ROS Indigo](http://wiki.ros.org/indigo/Installation)
@@ -76,6 +77,12 @@ rosdep install -r --from-paths .
 cd ~/catkin_ws
 catkin_make
 ```
+
+**Important `cob_people_perception` modification**
+`cob_people_perception` project provides a pacakage called `cob_openni2_tracker` which as the name implies, allows us to have a skeleton tracker. However, if we need to get `tf`s broadcasted we need to make an alteration to the `.yaml` file of the pacakge.
+
+Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
+
 - Install [`cv_bridge`](http://wiki.ros.org/cv_bridge) and [`vision_opencv`](http://wiki.ros.org/vision_opencv) required for the perception part of the project:
 ```
 sudo apt-get install ros-indigo-cv-bridge
@@ -88,19 +95,16 @@ sudo pip install imutils
 
 Clone Project
 -------------
+Now that you have installed all required libraries you need to clone this project.
+
 Either in `catkin_ws/src` or `ros_ws/src` clone this project:
 ```
 git clone git@github.com:papallas/baxter_cashier.git
 ```
 
-Important `cob_people_perception` modification
------------------------------------------------
-`cob_people_perception` project provides a pacakage called `cob_openni2_tracker` which as the name implies, allows us to have a skeleton tracker. However, if we need to get `tf`s broadcasted we need to make an alteration to the `.yaml` file of the pacakge.
-
-Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
-
 Money Bills
 ===========
+This section is about the money bills that are used in the project. Money bills are used between Baxter and the customer to establish a payment. This project works with defined money bills (fake money bills).
 
 <table>
  <tr>
@@ -115,14 +119,14 @@ Money Bills
 
 Edit Templates
 --------------
-The money bills were created using the Pixelmator software. The template files are available under `TODO` and can be editted.
+The money bills were created using the Pixelmator software. If you need to edit or create new notes the files are available under `TODO`.
 
 Print bills
 ------------
 You can print bills as images. The images are available under `TODO` and when printing A4 paper put the scale to `45%` and then with a scissor cut the bill.
 
 Running
-============
+========
 
 (Optional) Run just the Skeleton Tracker
 -----------------------------
