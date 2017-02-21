@@ -102,6 +102,17 @@ Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_par
 Money Bills
 ===========
 
+<table>
+ <tr>
+   <td>
+    <img src="https://cloud.githubusercontent.com/assets/6514550/23165412/e91d7e84-f833-11e6-8ffa-8bc387f479c5.png" alt="Five Bill" width="200">
+   </td>
+   <td>
+    <img src="https://cloud.githubusercontent.com/assets/6514550/23165411/e9199c1a-f833-11e6-9d5e-c13342916926.png" alt="One Bill" width="200">
+   </td>
+ </tr>
+</table>
+
 Edit Templates
 --------------
 The money bills were created using the Pixelmator software. The template files are available under `TODO` and can be editted.
