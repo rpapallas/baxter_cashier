@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Based: http://answers.ros.org/question/210294/ros-python-save-snapshot-from-camera/
+Based:
+http://answers.ros.org/question/210294/ros-python-save-snapshot-from-camera/
 """
 
 import roslib
@@ -13,6 +14,7 @@ import time
 import numpy as np
 import imutils
 import sys
+
 
 class ShapeDetector:
     def __init__(self):
@@ -51,6 +53,7 @@ class ShapeDetector:
         # return the name of the shape
         return shape
 
+
 class ImageListener:
     def __init__(self, image_topic):
         # self.image_pub = rospy.Publisher(image_topic, Image)
@@ -59,7 +62,7 @@ class ImageListener:
         self.image_sub = rospy.Subscriber(image_topic, Image, self.callback)
         self.counter = 0
 
-    def callback(self,data):
+    def callback(self, data):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
@@ -86,16 +89,17 @@ class ImageListener:
         mask_green = cv2.inRange(hsv, lower_range_green, upper_range_green)
         mask_blue = cv2.inRange(hsv, lower_range_blue, upper_range_blue)
 
-        cv2.imshow('mask green',mask_green)
+        cv2.imshow('mask green', mask_green)
         cv2.imshow('mask blue', mask_blue)
         cv2.imshow('image', img)
 
         while(1):
-          k = cv2.waitKey(0)
-          if(k == 27):
-            break
+            k = cv2.waitKey(0)
+            if(k == 27):
+                break
 
         cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     ic = ImageListener("/camera/rgb/image_rect_color")
