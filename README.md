@@ -11,21 +11,25 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 ![Baxter](https://cloud.githubusercontent.com/assets/6514550/23082358/ef6cd810-f550-11e6-9088-c54a4a1f7a3b.png)
 
+
+
 1. Table of Contents
 ====================
 
-  * [Introduction](#introduction)
-  * [Table of Contents](#table-of-contents)
-  * [About The Project](#about-the-project)
-    * [How the repository is organised](#how-the-repository-is-organised)
-  * [Installation](#installation)
-    * [Prerequisites](#prerequisites)
-    * [Clone Project](#clone-project)
-  * [Money Bills](#money-bills)
-    * [Edit Templates](#edit-templates)
-    * [Print bills](#print-bills)
-  * [Running](#running)
-    * [Run just the Skeleton Tracker](#optional-run-just-the-skeleton-tracker)
+  * [Introduction](#0-introduction)
+  * [Table of Contents](#1-table-of-contents)
+  * [About The Project](#2-about-the-project)
+    * [How the repository is organised](#21-how-the-repository-is-organised)
+  * [Installation](#3-installation)
+    * [Prerequisites](#31-prerequisites)
+    * [Clone Project](#32-clone-project)
+  * [Money Bills](#4-money-bills)
+    * [Edit Templates](#41-edit-templates)
+    * [Print bills](#42-print-bills)
+  * [Running](#5-running)
+    * [Run just the Skeleton Tracker](#51-optional-run-just-the-skeleton-tracker)
+
+
 
 2. About The Project
 ====================
@@ -47,6 +51,8 @@ This repository makes use of most of the project managment features provided by 
 By the end of the project probably most of the issues will be closed and hence you need to find the closed issues. Alternative, the Project's boards allows you to see the phase's issues under four columns (Someday/Maybe, To Do, In Progress and Done). Note that the issues/notes under Someday/Maybe are ideas or suggestions that are not of priority but will be good if implemented, however is not guaranteed that will ever be implemented.
 
 Milestones are great way to visualise the project in different phases and issues are assigned to phases.
+
+
 
 3. Installation
 ===============
@@ -102,6 +108,8 @@ Either in `catkin_ws/src` or `ros_ws/src` clone this project:
 git clone git@github.com:papallas/baxter_cashier.git
 ```
 
+
+
 4. Money Bills
 ==============
 This section is about the money bills that are used in the project. Money bills are used between Baxter and the customer to establish a payment. This project works with defined money bills (fake money bills).
@@ -124,6 +132,8 @@ The money bills were created using the Pixelmator software. If you need to edit 
 4.2 Print bills
 ---------------
 You can print bills as images. The images are available under `TODO` and when printing A4 paper put the scale to `45%` and then with a scissor cut the bill.
+
+
 
 5. Running
 ==========
