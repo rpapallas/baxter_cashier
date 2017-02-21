@@ -99,10 +99,6 @@ Important `cob_people_perception` modification
 
 Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
 
-Installation
-============
-
-
 Money Bills
 ===========
 
@@ -113,6 +109,9 @@ The money bills were created using the Pixelmator software. The template files a
 Print bills
 ------------
 You can print bills as images. The images are available under `TODO` and when printing A4 paper put the scale to `45%` and then with a scissor cut the bill.
+
+Running
+============
 
 (Optional) Run just the Skeleton Tracker
 -----------------------------
