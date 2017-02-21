@@ -12,6 +12,7 @@ import cv2
 import time
 import numpy as np
 import imutils
+import sys
 
 class ShapeDetector:
     def __init__(self):
@@ -56,20 +57,48 @@ class ImageListener:
         self.bridge = CvBridge()
         time.sleep(10)
         self.image_sub = rospy.Subscriber(image_topic, Image, self.callback)
+        self.counter = 0
 
     def callback(self,data):
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print e
+
+        if self.counter < 5:
+            self.counter += 1
+            return
         else:
             self.image_sub.unregister()
 
+        # The 1 means we want the image in BGR, and not in grayscale.
+        img = cv2.imread(sys.argv[1], 1)
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+        # For Five bill (green)
+        lower_range_green = np.array([48, 100, 100], dtype=np.uint8)
+        upper_range_green = np.array([68, 255, 255], dtype=np.uint8)
 
+        # For One bill (blue)
+        lower_range_blue = np.array([1, 100, 100], dtype=np.uint8)
+        upper_range_blue = np.array([21, 255, 255], dtype=np.uint8)
+
+        mask_green = cv2.inRange(hsv, lower_range_green, upper_range_green)
+        mask_blue = cv2.inRange(hsv, lower_range_blue, upper_range_blue)
+
+        cv2.imshow('mask green',mask_green)
+        cv2.imshow('mask blue', mask_blue)
+        cv2.imshow('image', img)
+
+        while(1):
+          k = cv2.waitKey(0)
+          if(k == 27):
+            break
+
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    ic = ImageListener("/camera/rgb/image_raw")
+    ic = ImageListener("/camera/rgb/image_rect_color")
     rospy.init_node('image_listener', anonymous=True)
 
     try:
