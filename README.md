@@ -16,18 +16,18 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 1. Table of Contents
 ====================
 
-  * [Introduction](#0-introduction)
-  * [Table of Contents](#1-table-of-contents)
-  * [About The Project](#2-about-the-project)
-    * [How the repository is organised](#21-how-the-repository-is-organised)
-  * [Installation](#3-installation)
-    * [Prerequisites](#31-prerequisites)
-    * [Clone Project](#32-clone-project)
-  * [Money Bills](#4-money-bills)
-    * [Edit Templates](#41-edit-templates)
-    * [Print bills](#42-print-bills)
-  * [Running](#5-running)
-    * [Run just the Skeleton Tracker](#51-optional-run-just-the-skeleton-tracker)
+  * [0. Introduction](#0-introduction)
+  * [1. Table of Contents](#1-table-of-contents)
+  * [2. About The Project](#2-about-the-project)
+    * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
+  * [3. Installation](#3-installation)
+    * [3.1 Prerequisites](#31-prerequisites)
+    * [3.2 Clone Project](#32-clone-project)
+  * [4. Money Bills](#4-money-bills)
+    * [4.1 Edit Templates](#41-edit-templates)
+    * [4.2 Print bills](#42-print-bills)
+  * [5. Running](#5-running)
+    * [5.1 Run just the Skeleton Tracker](#51-optional-run-just-the-skeleton-tracker)
 
 
 
