@@ -1,5 +1,5 @@
-Introduction
-============
+0. Introduction
+===============
 
 This repository host the "Human-Robot Interaction for Cashier Robot" project, a undergraduate final year project at the School of Computing, University of Leeds. 
 
@@ -11,8 +11,8 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 ![Baxter](https://cloud.githubusercontent.com/assets/6514550/23082358/ef6cd810-f550-11e6-9088-c54a4a1f7a3b.png)
 
-Table of Contents
-=================
+1. Table of Contents
+====================
 
   * [Introduction](#introduction)
   * [Table of Contents](#table-of-contents)
@@ -27,8 +27,8 @@ Table of Contents
   * [Running](#running)
     * [Run just the Skeleton Tracker](#optional-run-just-the-skeleton-tracker)
 
-About The Project
-=================
+2. About The Project
+====================
 
 This project is focusing on developing packages and algorithms for Baxter Robot by Rethink Robotics. The project's aim is to make Baxter a cashier in a sweetshop. 
 
@@ -36,8 +36,8 @@ This involves several aspects:
 - Perception: Skeleton Tracking to identify hand-pose of the customer.
 - Manipulation: Baxter to get and give money to the customer's hand.
 
-How the repository is organised
--------------------------------
+2.1 How the repository is organised
+-----------------------------------
 This repository makes use of most of the project managment features provided by GitHub. Including, issues, milestones, projects/boards.
 
 * Project's [milestones](https://github.com/papallas/baxter_cashier/milestones).
@@ -48,13 +48,13 @@ By the end of the project probably most of the issues will be closed and hence y
 
 Milestones are great way to visualise the project in different phases and issues are assigned to phases.
 
-Installation
-============
+3. Installation
+===============
 
 This section describes what you need to install so you can have the project running on Baxter or the Gazebo simulator.
 
-Prerequisites
--------------
+3.1 Prerequisites
+-----------------
 - Install [ROS Indigo](http://wiki.ros.org/indigo/Installation)
 - Install [Baxter SDK](http://sdk.rethinkrobotics.com/wiki/Workstation_Setup)
 - Install Openni2
@@ -93,8 +93,8 @@ sudo apt-get install ros-indigo-vision-opencv
 sudo pip install imutils
 ```
 
-Clone Project
--------------
+3.2 Clone Project
+-----------------
 Now that you have installed all required libraries you need to clone this project.
 
 Either in `catkin_ws/src` or `ros_ws/src` clone this project:
@@ -102,8 +102,8 @@ Either in `catkin_ws/src` or `ros_ws/src` clone this project:
 git clone git@github.com:papallas/baxter_cashier.git
 ```
 
-Money Bills
-===========
+4. Money Bills
+==============
 This section is about the money bills that are used in the project. Money bills are used between Baxter and the customer to establish a payment. This project works with defined money bills (fake money bills).
 
 <table>
@@ -117,19 +117,19 @@ This section is about the money bills that are used in the project. Money bills 
  </tr>
 </table>
 
-Edit Templates
---------------
+4.1 Edit Templates
+------------------
 The money bills were created using the Pixelmator software. If you need to edit or create new notes the files are available under `TODO`.
 
-Print bills
-------------
+4.2 Print bills
+---------------
 You can print bills as images. The images are available under `TODO` and when printing A4 paper put the scale to `45%` and then with a scissor cut the bill.
 
-Running
-========
+5. Running
+==========
 
-(Optional) Run just the Skeleton Tracker
------------------------------
+5.1 (Optional) Run just the Skeleton Tracker
+--------------------------------------------
 To run the skeleton tracker individually, here are the steps required (in separate terminal windows):
 ```
 roslaunch openni2_launch openni2.launch depth_registration:=true
