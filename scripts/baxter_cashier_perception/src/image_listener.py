@@ -59,6 +59,7 @@ class ImageListener:
         time.sleep(10)
         self.image_sub = rospy.Subscriber(image_topic, Image, self.callback)
         self.counter = 0
+        self.detected = None
 
     def callback(self, data):
         try:
@@ -69,34 +70,45 @@ class ImageListener:
         if self.counter < 5:
             self.counter += 1
             return
-        else:
-            self.image_sub.unregister()
+        # else:
+        #     self.image_sub.unregister()
+        if self.counter == 6:
+            print "Now tracking..."
 
         # The 1 means we want the image in BGR, and not in grayscale.
-        img = cv2.imread(sys.argv[1], 1)
+        img = cv_image
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        # For Five bill (green)
-        lower_range_green = np.array([48, 100, 100], dtype=np.uint8)
-        upper_range_green = np.array([68, 255, 255], dtype=np.uint8)
+        lower_range_red = np.array([101, 100, 100])
+        upper_range_red = np.array([400, 255, 255])
 
-        # For One bill (blue)
-        lower_range_blue = np.array([1, 100, 100], dtype=np.uint8)
-        upper_range_blue = np.array([21, 255, 255], dtype=np.uint8)
+        lower_range_orange = np.array([1, 100, 100])
+        upper_range_orange = np.array([101, 255, 255])
 
-        mask_green = cv2.inRange(hsv, lower_range_green, upper_range_green)
-        mask_blue = cv2.inRange(hsv, lower_range_blue, upper_range_blue)
+        hsv2 = hsv.copy()
 
-        cv2.imshow('mask green', mask_green)
-        cv2.imshow('mask blue', mask_blue)
-        cv2.imshow('image', img)
+        mask_orange = cv2.inRange(hsv, lower_range_orange, upper_range_orange)
+        mask_red = cv2.inRange(hsv2, lower_range_red, upper_range_red)
+        if np.count_nonzero(mask_orange) > 40000 or np.count_nonzero(mask_red) > 40000:
+            if np.count_nonzero(mask_orange) > np.count_nonzero(mask_red):
+                if self.detected == "one" or self.detected is None:
+                    print "Detected a FIVE"
+                    self.detected = "five"
+            elif np.count_nonzero(mask_red) > np.count_nonzero(mask_orange):
+                if self.detected == "five" or self.detected is None:
+                    print "Detected a ONE"
+                    self.detected = "one"
 
-        while(1):
-            k = cv2.waitKey(0)
-            if(k == 27):
-                break
-
-        cv2.destroyAllWindows()
+        # cv2.imshow('Five Pounds Detected', mask_orange)
+        # cv2.imshow('One Pounds Detected', mask_red)
+        # cv2.imshow('image', img)
+        #
+        # while(1):
+        #     k = cv2.waitKey(0)
+        #     if(k == 27):
+        #         break
+        #
+        # cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
