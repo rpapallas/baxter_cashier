@@ -15,7 +15,6 @@ import numpy as np
 import imutils
 import sys
 
-
 class ShapeDetector:
     def __init__(self):
         pass
