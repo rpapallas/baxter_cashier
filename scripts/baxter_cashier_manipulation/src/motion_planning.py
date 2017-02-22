@@ -8,13 +8,16 @@
     result of the Inverse Kinematics.
 
     References & Credits:
-    1. https://github.com/RethinkRobotics/baxter_examples/blob/master/scripts/joint_position_keyboard.py
+    1. https://github.com/RethinkRobotics/
+        baxter_examples/blob/master/scripts/joint_position_keyboard.py
     2. http://sdk.rethinkrobotics.com/wiki/IK_Service_-_Code_Walkthrough
 
     Finally API Documentation of Limb class was also useful and can be
     found here:
-    1. http://docs.ros.org/groovy/api/baxter_interface/html/baxter_interface.limb-pysrc.html
-    2. http://api.rethinkrobotics.com/baxter_interface/html/baxter_interface.limb.Limb-class.html
+    1. http://docs.ros.org/groovy/api/baxter_interface/html/
+        baxter_interface.limb-pysrc.html
+    2. http://api.rethinkrobotics.com/baxter_interface/html/
+        baxter_interface.limb.Limb-class.html
 
     Author: Rafael Papallas
 '''
@@ -43,15 +46,14 @@ from baxter_core_msgs.srv import (
     SolvePositionIKRequest,
 )
 
+
 class Shopkeeper:
     def __init__(self):
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
 
-
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
-
 
     def move_limb_to_position(self, limb_side, joints_configurations):
         '''
@@ -66,7 +68,6 @@ class Shopkeeper:
         limb.move_to_joint_positions(joints_configurations)
         print "Limb reposition done."
 
-
     def set_neutral_position_of_limb(self, limb):
         '''
         Set limb's neutral position.
@@ -74,7 +75,6 @@ class Shopkeeper:
         print "Moving limb to neutral position..."
         limb.move_to_neutral()
         print "Limb's neutral position set."
-
 
     def inverse_kinematic_solver(self, limb_side, poses):
         '''
@@ -112,12 +112,12 @@ class Shopkeeper:
 
         return None
 
-
     def get_poses_from_space(self):
         '''
         Returns a pose from space.
         TODO: Currently hard-coded for testing purposes.
         '''
+        # TODO: Refactor this code
         hdr = Header(stamp=rospy.Time.now(), frame_id='base')
 
         listener = tf.TransformListener()
@@ -201,6 +201,7 @@ def setup_args():
     )
     return parser.parse_args(rospy.myargv()[1:])
 
+
 def main():
     init()
     args = setup_args()
@@ -210,6 +211,7 @@ def main():
     joint_configurations = baxter.inverse_kinematic_solver(args.limb, poses)
     if joint_configurations is not None:
         baxter.move_limb_to_position(args.limb, joint_configurations)
+
 
 if __name__ == '__main__':
     sys.exit(main())
