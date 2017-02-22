@@ -72,8 +72,9 @@ class ImageListener:
             return
         # else:
         #     self.image_sub.unregister()
-        if self.counter == 6:
+        if self.counter == 5:
             print "Now tracking..."
+            self.counter += 1
 
         # The 1 means we want the image in BGR, and not in grayscale.
         img = cv_image
