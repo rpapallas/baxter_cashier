@@ -13,7 +13,6 @@ import time
 import numpy as np
 import sys
 
-
 class ShapeDetector:
     def __init__(self):
         pass
