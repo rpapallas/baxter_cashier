@@ -76,6 +76,8 @@ git clone git@github.com:ipa-rmb/cob_people_perception.git
 cd cob_people_perception
 rosdep install -r --from-paths .
 
+cd ~/catkin_ws/src
+
 git clone git@github.com:ipa-rmb/cob_perception_common.git
 cd cob_perception_common
 rosdep install -r --from-paths .
