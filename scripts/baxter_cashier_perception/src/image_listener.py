@@ -5,14 +5,12 @@ Based:
 http://answers.ros.org/question/210294/ros-python-save-snapshot-from-camera/
 """
 
-import roslib
 import rospy
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import time
 import numpy as np
-import imutils
 import sys
 
 
