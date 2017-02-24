@@ -28,6 +28,7 @@ import tf
 from threading import Thread
 import time
 
+
 class InvalidBodyPartException(Exception):
     """
     Raises exception if the body part string provided by the user is
@@ -39,6 +40,7 @@ class InvalidBodyPartException(Exception):
     def __str__(self):
         return """ The provided body part {} is not a valid body part
                for the skeleton tracker.""".format(self.value)
+
 
 class BodyTrackerListener:
     def __init__(self):
