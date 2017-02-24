@@ -22,13 +22,21 @@
     Author: Rafael Papallas
 '''
 
+# System imports
 import argparse
 import sys
-import rospy
 
+# Baxter specific imports
 import baxter_interface
 import baxter_external_devices
+from baxter_interface import CHECK_VERSION
+from baxter_core_msgs.srv import (
+    SolvePositionIK,
+    SolvePositionIKRequest,
+)
 
+# ROS specific imports
+import rospy
 from geometry_msgs.msg import (
     PoseStamped,
     Pose,
@@ -37,16 +45,10 @@ from geometry_msgs.msg import (
 )
 
 from std_msgs.msg import Header
-from baxter_interface import CHECK_VERSION
 
-import tf
-
-from baxter_core_msgs.srv import (
-    SolvePositionIK,
-    SolvePositionIKRequest,
-)
-
+# Project specific imports
 from body_tracker_listener import BodyTrackerListener
+
 
 class Shopkeeper:
     def __init__(self):
@@ -178,7 +180,8 @@ def main():
 
     baxter = Shopkeeper()
     pose_stamped = baxter.get_pose_stamped_from_space()
-    joint_configurations = baxter.inverse_kinematic_solver(args.limb, pose_stamped)
+    joint_configurations = baxter.inverse_kinematic_solver(args.limb,
+                                                           pose_stamped)
     if joint_configurations is not None:
         baxter.move_limb_to_position(args.limb, joint_configurations)
 
