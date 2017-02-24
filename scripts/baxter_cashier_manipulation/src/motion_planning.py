@@ -115,7 +115,6 @@ class Shopkeeper:
     def get_poses_from_space(self):
         '''
         Returns a pose from space.
-        TODO: Currently hard-coded for testing purposes.
         '''
         # TODO: Refactor this code
         hdr = Header(stamp=rospy.Time.now(), frame_id='base')
