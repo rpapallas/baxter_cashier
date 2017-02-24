@@ -46,6 +46,7 @@ from baxter_core_msgs.srv import (
     SolvePositionIKRequest,
 )
 
+from body_tracker_listener import BodyTrackerListener
 
 class Shopkeeper:
     def __init__(self):
@@ -76,7 +77,7 @@ class Shopkeeper:
         limb.move_to_neutral()
         print "Limb's neutral position set."
 
-    def inverse_kinematic_solver(self, limb_side, poses):
+    def inverse_kinematic_solver(self, limb_side, pose_stamped):
         '''
         Performs Inverse Kinematic on a given limb and pose.
 
@@ -90,7 +91,7 @@ class Shopkeeper:
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
         ikreq = SolvePositionIKRequest()
 
-        ikreq.pose_stamp.append(poses[limb_side])
+        ikreq.pose_stamp.append(pose_stamped)
 
         try:
             rospy.wait_for_service(ns, 5.0)
@@ -112,62 +113,32 @@ class Shopkeeper:
 
         return None
 
-    def get_poses_from_space(self):
+    def get_pose_stamped_from_space(self):
         '''
         Returns a pose from space.
         '''
-        # TODO: Refactor this code
-        hdr = Header(stamp=rospy.Time.now(), frame_id='base')
 
-        listener = tf.TransformListener()
+        body_tracker_listener = BodyTrackerListener()
+        tracker_listener.start_listening_for(user_number=1,
+                                             body_part="left_hand")
 
-        rate = rospy.Rate(1.0)
-        while not rospy.is_shutdown():
-            try:
-                (trans,rot) = listener.lookupTransform('/camera_depth_optical_frame', 'cob_body_tracker/user_1/left_hand', rospy.Time(0))
-                print str(trans) + ", " + str(rot)
-                break
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                continue
+        sleep.wait(5)
 
-            rate.sleep()
+        if tracker_listener.transformation is not None \
+           and tracker_listener.rotation is not None:
 
-        poses = {
-            'left': PoseStamped(
-                header=hdr,
-                pose=Pose(
-                    position=Point(
-                        x=trans[0],
-                        y=trans[1],
-                        z=trans[2],
-                    ),
-                    orientation=Quaternion(
-                        x=rot[0],
-                        y=rot[1],
-                        z=rot[2],
-                        w=rot[3],
-                    ),
-                ),
-            ),
-            'right': PoseStamped(
-                header=hdr,
-                pose=Pose(
-                    position=Point(
-                        x=0.961982770038,
-                        y=-0.552598021641,
-                        z=0.588609422173,
-                    ),
-                    orientation=Quaternion(
-                        x=0.567048116303,
-                        y=0.885911751787,
-                        z=-0.108908281936,
-                        w=0.561868353356,
-                    ),
-                ),
-            ),
-        }
+            x, y, z = tracker_listener.transformation
+            position = Point(x, y, z)
 
-        return poses
+            x, y, z, w = tracker_listener.rotation
+            orientation = Quaternion(x, y, z, w)
+
+            pose = Pose(position=position, orientation=orientation)
+
+            hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+            return PoseStamped(header=hdr, pose=pose)
+
+        return None
 
 
 def init():
@@ -206,8 +177,8 @@ def main():
     args = setup_args()
 
     baxter = Shopkeeper()
-    poses = baxter.get_poses_from_space()
-    joint_configurations = baxter.inverse_kinematic_solver(args.limb, poses)
+    pose_stamped = baxter.get_pose_stamped_from_space()
+    joint_configurations = baxter.inverse_kinematic_solver(args.limb, pose_stamped)
     if joint_configurations is not None:
         baxter.move_limb_to_position(args.limb, joint_configurations)
 
