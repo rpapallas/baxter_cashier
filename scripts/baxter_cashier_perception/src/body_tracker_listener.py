@@ -20,11 +20,11 @@ manner:
 """
 
 import roslib
+import os
 import rospy
 import tf
 import time
-from subprocess import call
-from subprocess import Popen
+import subprocess
 
 
 class InvalidBodyPartException(Exception):
@@ -60,7 +60,7 @@ class BodyTrackerListener:
 
         return True if body_part in possible_body_parts else False
 
-    def start_listening_for(self, user_number, body_part, sec_to_listen):
+    def start_listening_for(self, user_number, body_part):
         """
         Bridge method that starts the Skeleton Tracker, starts the process of
         listening to the pose and kill the skeleton tracker.
@@ -74,50 +74,11 @@ class BodyTrackerListener:
             except InvalidBodyPartException as e:
                 print e
 
-        print "Starting the skeleton tracker..."
-        self._start_skeleton_tracker()
-        print "Skeleton tracker started"
-
-        # Give some time for the Skeleton Tracker to start normally
-        time.sleep(5)
-
         print "Start listenning..."
-        tran, rot = self._listen(user_number=user_number=, body_part=body_part)
+        tran, rot = self._listen(user_number=user_number,  body_part=body_part)
         print "Finished listenning."
 
-        print "Killing now the Skeleton Tracker..."
-        self._kill_skeleton_tracker()
-        print "Skeleton tracker killed."
-
         return tran, rot
-
-
-    def _start_skeleton_tracker(self):
-        """
-        To start the skeleton tracker we need first to start the OpenNI2 node
-        that actually starts the camera sensor and then the COB library that
-        implements the Skeleton Tracker. These two collaborate together to
-        achieve at the end the "Skeleton Tracking".
-
-        We do start the skeleton tracker using Python's Popen.
-        """
-        self._openni2_node = subprocess.Popen(["roslaunch",
-                                               "openni2_launch",
-                                               "openni2.launch",
-                                               "depth_registration:=true"
-                                               ])
-
-        self._skeleton_node = subprocess.Popen(["roslaunch",
-                                                "cob_openni2_tracker",
-                                                "body_tracker_nodelet.launch"])
-
-    def _kill_skeleton_tracker(self):
-        """
-        Skeleton Tracker consists of two main processes that both needs to be
-        killed when Skeleton Tracker needs to be stopped.
-        """
-        self._skeleton_node.kill()
-        self._openni2_node.kill()
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
@@ -133,14 +94,14 @@ class BodyTrackerListener:
         while time.time() < timeout_start + timeout:
             try:
                 # Try to listen for the transformation and rotation of the node
-                (transformation, rotation) = _listener.lookupTransform(source,
+                (transformation, rotation) =self. _listener.lookupTransform(source,
                                                                        target,
                                                                        rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e
 
-            _RATE.sleep()
+            self._RATE.sleep()
 
         return transformation, rotation
 
