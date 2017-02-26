@@ -4,9 +4,6 @@ This script acts as a listener to the Skeleton Tracker provided by the
 cob_people_perception library. It listens to a specific frame of the
 user's hand and returns the pose to the caller.
 
-It uses threads to execute the job so it does not hold other code calling
-this class.
-
 The cob_people_perception library publishes the tf frames in the following
 manner:
 - Parent: /camera_depth_optical_frame
@@ -25,8 +22,9 @@ manner:
 import roslib
 import rospy
 import tf
-from threading import Thread
 import time
+from subprocess import call
+from subprocess import Popen
 
 
 class InvalidBodyPartException(Exception):
@@ -48,11 +46,6 @@ class BodyTrackerListener:
         rospy.init_node("body_tracker_listener")
         self._listener = tf.TransformListener()
         self._RATE = rospy.Rate(0.3)
-        self.listen_thread = None
-
-        # These two will be updated when listen_for method is called.
-        self.transformation = None
-        self.rotation = None
 
     def _is_body_part_valid(self, body_part):
         """
@@ -68,6 +61,12 @@ class BodyTrackerListener:
         return True if body_part in possible_body_parts else False
 
     def start_listening_for(self, user_number, body_part, sec_to_listen):
+        """
+        Bridge method that starts the Skeleton Tracker, starts the process of
+        listening to the pose and kill the skeleton tracker.
+
+        Returns back the transformation and rotation of the pose requested.
+        """
         # Throw an exception if body part not valid
         if not self._is_body_part_valid(body_part):
             try:
@@ -75,30 +74,76 @@ class BodyTrackerListener:
             except InvalidBodyPartException as e:
                 print e
 
-        self.listen_thread = threading.Thread(target=self._listen, args=(user_number, body_part))
+        print "Starting the skeleton tracker..."
+        self._start_skeleton_tracker()
+        print "Skeleton tracker started"
 
-        # By setting them as daemon threads, you can let them run and forget
-        # about them, and when your program quits, any daemon threads
-        # are killed automatically.
-        thread.daemon = True
-        thread.start()
+        # Give some time for the Skeleton Tracker to start normally
+        time.sleep(5)
+
+        print "Start listenning..."
+        tran, rot = self._listen(user_number=user_number=, body_part=body_part)
+        print "Finished listenning."
+
+        print "Killing now the Skeleton Tracker..."
+        self._kill_skeleton_tracker()
+        print "Skeleton tracker killed."
+
+        return tran, rot
+
+
+    def _start_skeleton_tracker(self):
+        """
+        To start the skeleton tracker we need first to start the OpenNI2 node
+        that actually starts the camera sensor and then the COB library that
+        implements the Skeleton Tracker. These two collaborate together to
+        achieve at the end the "Skeleton Tracking".
+
+        We do start the skeleton tracker using Python's Popen.
+        """
+        self._openni2_node = subprocess.Popen(["roslaunch",
+                                               "openni2_launch",
+                                               "openni2.launch",
+                                               "depth_registration:=true"
+                                               ])
+
+        self._skeleton_node = subprocess.Popen(["roslaunch",
+                                                "cob_openni2_tracker",
+                                                "body_tracker_nodelet.launch"])
+
+    def _kill_skeleton_tracker(self):
+        """
+        Skeleton Tracker consists of two main processes that both needs to be
+        killed when Skeleton Tracker needs to be stopped.
+        """
+        self._skeleton_node.kill()
+        self._openni2_node.kill()
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
         source = '/camera_depth_optical_frame'
         target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
 
-        while not rospy.is_shutdown():
+        timeout_start = time.time()
+        timeout = 5   # [seconds]
+
+        transformation = [0, 0, 0]
+        rotation = [0, 0, 0, 0]
+
+        while time.time() < timeout_start + timeout:
             try:
                 # Try to listen for the transformation and rotation of the node
-                (transformation, rotation) = _listener.lookupTransform(source, target, rospy.Time(0))
-                self.transformation = transformation
-                self.rotation = rotation
+                (transformation, rotation) = _listener.lookupTransform(source,
+                                                                       target,
+                                                                       rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e
 
             _RATE.sleep()
+
+        return transformation, rotation
+
 
 if __name__ == '__main__':
     tracker_listener = BodyTrackerListener()
@@ -106,7 +151,8 @@ if __name__ == '__main__':
 
     time.sleep(10)
 
-    if tracker_listener.transformation is not None and tracker_listener.rotation is not None:
+    if tracker_listener.transformation is not None \
+       and tracker_listener.rotation is not None:
         print "Transformation: {}".format(tracker_listener.transformation)
         print "Rotation: {}".format(tracker_listener.rotation)
     else:
