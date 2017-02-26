@@ -121,26 +121,19 @@ class Shopkeeper:
         '''
 
         body_tracker_listener = BodyTrackerListener()
-        tracker_listener.start_listening_for(user_number=1,
-                                             body_part="left_hand")
+        tran, rot = tracker_listener.start_listening_for(user_number=1,
+                                                         body_part="left_hand")
 
-        sleep.wait(5)
+        x, y, z = tran
+        position = Point(x, y, z)
 
-        if tracker_listener.transformation is not None \
-           and tracker_listener.rotation is not None:
+        x, y, z, w = rot
+        orientation = Quaternion(x, y, z, w)
 
-            x, y, z = tracker_listener.transformation
-            position = Point(x, y, z)
+        pose = Pose(position=position, orientation=orientation)
 
-            x, y, z, w = tracker_listener.rotation
-            orientation = Quaternion(x, y, z, w)
-
-            pose = Pose(position=position, orientation=orientation)
-
-            hdr = Header(stamp=rospy.Time.now(), frame_id='base')
-            return PoseStamped(header=hdr, pose=pose)
-
-        return None
+        hdr = Header(stamp=rospy.Time.now(), frame_id='base')
+        return PoseStamped(header=hdr, pose=pose)
 
 
 def init():
