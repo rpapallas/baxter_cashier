@@ -147,13 +147,8 @@ class BodyTrackerListener:
 
 if __name__ == '__main__':
     tracker_listener = BodyTrackerListener()
-    tracker_listener.start_listening_for(user_number=1, body_part="left_hand")
+    tran, rot = tracker_listener.start_listening_for(user_number=1,
+                                                     body_part="left_hand")
 
-    time.sleep(10)
-
-    if tracker_listener.transformation is not None \
-       and tracker_listener.rotation is not None:
-        print "Transformation: {}".format(tracker_listener.transformation)
-        print "Rotation: {}".format(tracker_listener.rotation)
-    else:
-        print "Nothing listened."
+    print "Transformation: {}".format(tran)
+    print "Rotation: {}".format(rot)
