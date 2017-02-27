@@ -87,7 +87,7 @@ class Shopkeeper:
         configuration of the limb.
         '''
         limb = self.get_limb_for_side(limb_side)
-        # self.set_neutral_position_of_limb(limb)
+        self.set_neutral_position_of_limb(limb)
 
         ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
@@ -121,8 +121,12 @@ class Shopkeeper:
         '''
 
         body_tracker_listener = BodyTrackerListener()
-        tran, rot = tracker_listener.start_listening_for(user_number=1,
+        tran, rot = body_tracker_listener.start_listening_for(user_number=1,
                                                          body_part="left_hand")
+
+
+        print tran
+        print rot
 
         x, y, z = tran
         position = Point(x, y, z)
@@ -138,7 +142,7 @@ class Shopkeeper:
 
 def init():
     print("Initializing node... ")
-    rospy.init_node("rsdk_joint_configuration")
+    rospy.init_node("baxter_cashier")
 
     print("Getting robot state... ")
     rs = baxter_interface.RobotEnable(CHECK_VERSION)
