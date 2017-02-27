@@ -68,6 +68,7 @@ This section describes what you need to install so you can have the project runn
 sudo apt-get install ros-indigo-openni2-launch
 sudo apt-get install ros-indigo-openni2-camera
 ```
+____
 - Install [`cob_people_perception`](https://github.com/ipa-rmb/cob_people_perception) and [`cob_perception_common`](https://github.com/ipa-rmb/cob_perception_common) library:
 ```
 cd ~/catkin_ws/src
@@ -94,13 +95,15 @@ Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_par
 **Error when running cob_openni2_tracker**   
 If you get the error `Get data for NiTE failed` then something is wrong with the NiTE2.
 
-To resolve do the following:
-ls -all ~/.ros/
+To resolve do the following:  
+`ls -all ~/.ros/`
 
-If the link of NiTE2 is not similar to the following:
-NiTE2 -> /home/your_username/catkin_ws/src/cob_people_perception/libnite2/common/lib/NiTE2/
+If the link of NiTE2 is not similar to the following:    
+`NiTE2 -> /home/your_username/catkin_ws/src/cob_people_perception/libnite2/common/lib/NiTE2/`
 
 Then delete this file by running `rm -r ~/.ros/NiTE2` and rerun `catkin_make` in catkin_ws directory.
+
+____
 
 - Install [`cv_bridge`](http://wiki.ros.org/cv_bridge) and [`vision_opencv`](http://wiki.ros.org/vision_opencv) required for the perception part of the project:
 ```
