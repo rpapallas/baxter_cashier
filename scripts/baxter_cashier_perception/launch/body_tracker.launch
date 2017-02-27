@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find pkg-name)/cob_people_perception/cob_openni2_tracker/launch/body_tracker_nodelet.launch"/>
+    <include file="$(find pkg-name)/cob_people_perception/cob_openni2_tracker/launch/body_tracker_nodelet.launch"/>
+</launch>
