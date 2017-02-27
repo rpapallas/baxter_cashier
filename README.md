@@ -91,6 +91,17 @@ catkin_make
 
 Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
 
+**Error when running cob_openni2_tracker**   
+If you get the error `Get data for NiTE failed` then something is wrong with the NiTE2.
+
+To resolve do the following:
+ls -all ~/.ros/
+
+If the link of NiTE2 is not similar to the following:
+NiTE2 -> /home/your_username/catkin_ws/src/cob_people_perception/libnite2/common/lib/NiTE2/
+
+Then delete this file by running `rm -r ~/.ros/NiTE2` and rerun `catkin_make` in catkin_ws directory.
+
 - Install [`cv_bridge`](http://wiki.ros.org/cv_bridge) and [`vision_opencv`](http://wiki.ros.org/vision_opencv) required for the perception part of the project:
 ```
 sudo apt-get install ros-indigo-cv-bridge
