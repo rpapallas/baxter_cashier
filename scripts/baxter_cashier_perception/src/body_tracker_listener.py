@@ -109,6 +109,9 @@ class BodyTrackerListener:
 
             self._RATE.sleep()
 
+        # Temp tran and rot for testing purposes
+        transformation = [0.657579481614, 0.451981417433, 0.2388352386502]
+        rotation = [-0.366894936773, 0.885980397775, 0.108155782462, 0.262162481772]
         return transformation, rotation
 
     def get_active_users_in_sence(self):
