@@ -94,13 +94,13 @@ class Shopkeeper:
         self.right_gripper = Gripper("right")
 
         # This is a static (relative) pose of Baxter's head camera.
-        self.relative_head_camera_pose = CashierPose(0.12839,   # Trans X
-                                                     0,         # Trans Y
-                                                     0.06368,   # Trans Z
-                                                     0.542864,  # Rotation X
-                                                     0.542864,  # Rotation Y
-                                                     0.453099,  # Rotation Z
-                                                     0.453099)  # Rotation W
+        self.relative_head_camera_pose = CashierPose(0.57354,   # Trans X
+                                                     -0.021107,         # Trans Y
+                                                     0.74713,   # Trans Z
+                                                     -0.02182,  # Rotation X
+                                                     -0.55414,  # Rotation Y
+                                                     0.77549,  # Rotation Z
+                                                     -0.30178)  # Rotation W
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
