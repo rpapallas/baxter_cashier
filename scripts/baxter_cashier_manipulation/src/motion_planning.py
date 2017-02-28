@@ -38,6 +38,7 @@ from baxter_core_msgs.srv import (
 
 # ROS specific imports
 import rospy
+
 from geometry_msgs.msg import (
     PoseStamped,
     Pose,
@@ -48,7 +49,7 @@ from geometry_msgs.msg import (
 from std_msgs.msg import Header
 
 # Project specific imports
-from baxter_cashier_perception.srv import GetUserPose
+from baxter_cashier_manipulation.srv import GetUserPose
 
 
 class CashierPose:

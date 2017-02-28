@@ -25,7 +25,7 @@ import rospy
 import tf
 import time
 import subprocess
-from .srv import *
+from baxter_cashier_manipulation.srv import *
 
 
 class InvalidBodyPartException(Exception):
