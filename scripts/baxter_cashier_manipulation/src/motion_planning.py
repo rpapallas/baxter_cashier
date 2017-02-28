@@ -49,6 +49,7 @@ from std_msgs.msg import Header
 # Project specific imports
 from baxter_cashier_perception.srv import GetUserPose
 
+
 class Shopkeeper:
     def __init__(self):
         self.left_limb = baxter_interface.Limb("left")
@@ -57,7 +58,7 @@ class Shopkeeper:
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
 
-    def move_limb_to_position(self, limb_side, joints_configurations):
+    def move_limb_to_position(self, limb_side, joints_configurations, is_get):
         '''
         Given the limb to be moved as well as the joint configurations
         which is a dictionary of key-value pair with key being the name
@@ -65,10 +66,30 @@ class Shopkeeper:
         function will configure all the joints to the given
         configuration
         '''
-        print "Starting limb repositioning..."
+
+        if is_get:
+            self.take_money_from_customer(limb_side, joints_configurations)
+        else:
+            self.give_money_to_customer(limb_side, joint_configurations)
+
+    def give_money_to_customer(self, limb_side, joints_configurations):
         limb = self.get_limb_for_side(limb_side)
         limb.move_to_joint_positions(joints_configurations)
-        print "Limb reposition done."
+        # TODO: Open End-Effector
+        time.sleep(2)
+        # TODO: Close End-Effector
+        # TODO: Bring hand to Robot's head
+
+    def take_money_from_customer(self, limb_side, joint_configurations):
+        limb = self.get_limb_for_side(limb_side)
+        limb.move_to_joint_positions(joints_configurations)
+
+        # Waiting user to reach the robot to get the money
+        time.sleep(2)
+
+        # TODO: Ensure that human's hand is touching the money note
+        # TODO: Open End-Effector
+        # TODO: Return to natural position
 
     def set_neutral_position_of_limb(self, limb):
         '''
