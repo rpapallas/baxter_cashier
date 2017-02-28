@@ -95,12 +95,12 @@ class Shopkeeper:
 
         # This is a static (relative) pose of Baxter's head camera.
         self.relative_head_camera_pose = CashierPose(0.12839,   # Trans X
-                                                                                     0,         # Trans Y
-                                                                                     0.06368,   # Trans Z
-                                                                                     0.542864,  # Rotation X
-                                                                                     0.542864,  # Rotation Y
-                                                                                     0.453099,  # Rotation Z
-                                                                                     0.453099)  # Rotation W
+                                                     0,         # Trans Y
+                                                     0.06368,   # Trans Z
+                                                     0.542864,  # Rotation X
+                                                     0.542864,  # Rotation Y
+                                                     0.453099,  # Rotation Z
+                                                     0.453099)  # Rotation W
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
@@ -137,11 +137,11 @@ class Shopkeeper:
         pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
         joints_to_move_to_head = self.inverse_kinematic_solver(limb_side,
                                                                pose_stamped)
-        
+
         if joints_to_move_to_head is not None:
             limb.move_to_joint_positions(joints_to_move_to_head)
         else:
-            print "Wasn't able to move limb to head camera for money recognition"
+            print "Wasn't able to move limb to head camera"
 
     def take_money_from_customer(self, limb_side, joint_configurations):
         limb = self.get_limb_for_side(limb_side)
