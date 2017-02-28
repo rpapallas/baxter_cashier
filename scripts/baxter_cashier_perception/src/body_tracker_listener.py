@@ -25,6 +25,7 @@ import rospy
 import tf
 import time
 import subprocess
+from .srv import *
 
 
 class InvalidBodyPartException(Exception):
@@ -61,7 +62,7 @@ class BodyTrackerListener:
 
     # TODO: Consider refactoring the name of the method to make more sense.
     def start_listening_for(self, request):
-        """user_number   body_part
+        """
         Bridge method that starts the Skeleton Tracker, starts the process of
         listening to the pose and kill the skeleton tracker.
 
@@ -109,6 +110,12 @@ class BodyTrackerListener:
             self._RATE.sleep()
 
         return transformation, rotation
+
+    def get_active_users_in_sence(self):
+        pass
+        # TODO: Implement the functionality here to detect which number of
+        # users are in the sence. For example user_1 may not be in sence
+        # anymore.
 
 
 if __name__ == '__main__':
