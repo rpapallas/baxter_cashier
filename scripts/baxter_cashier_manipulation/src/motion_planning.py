@@ -47,8 +47,7 @@ from geometry_msgs.msg import (
 from std_msgs.msg import Header
 
 # Project specific imports
-from body_tracker_listener import BodyTrackerListener
-
+from baxter_cashier_perception.srv import GetUserPose
 
 class Shopkeeper:
     def __init__(self):
@@ -120,18 +119,22 @@ class Shopkeeper:
         Returns a pose from space.
         '''
 
-        body_tracker_listener = BodyTrackerListener()
-        tran, rot = body_tracker_listener.start_listening_for(user_number=1,
-                                                         body_part="left_hand")
+        # This method blocks until the service 'get_user_pose' is available
+        rospy.wait_for_service('get_user_pose')
 
+        try:
+            # Handle for calling the service
+            get_user_pose = rospy.ServiceProxy('get_user_pose', GetUserPose)
 
-        print tran
-        print rot
+            # Use the handle as any other normal function
+            response = get_user_pose(user_number='1', body_part='left_hand')
+        except rospy.ServiceException, e:
+            print "Service call failed: %s" % e
 
-        x, y, z = tran
+        x, y, z = response.transformation
         position = Point(x, y, z)
 
-        x, y, z, w = rot
+        x, y, z, w = response.rotation
         orientation = Quaternion(x, y, z, w)
 
         pose = Pose(position=position, orientation=orientation)
