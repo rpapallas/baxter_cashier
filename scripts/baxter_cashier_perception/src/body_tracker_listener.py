@@ -69,9 +69,9 @@ class BodyTrackerListener:
         Returns back the transformation and rotation of the pose requested.
         """
         # Throw an exception if body part not valid
-        if not self._is_body_part_valid(body_part):
+        if not self._is_body_part_valid(request.body_part):
             try:
-                raise InvalidBodyPartException(body_part)
+                raise InvalidBodyPartException(request.body_part)
             except InvalidBodyPartException as e:
                 print e
 
@@ -97,17 +97,17 @@ class BodyTrackerListener:
         transformation = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
-        while time.time() < timeout_start + timeout:
-            try:
-                # Try to listen for the transformation and rotation of the node
-                (transformation, rotation) = self._listener.lookupTransform(source,
-                                                                            target,
-                                                                            rospy.Time(0))
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException) as e:
-                print e
-
-            self._RATE.sleep()
+        # while time.time() < timeout_start + timeout:
+        #     try:
+        #         # Try to listen for the transformation and rotation of the node
+        #         (transformation, rotation) = self._listener.lookupTransform(source,
+        #                                                                     target,
+        #                                                                     rospy.Time(0))
+        #     except (tf.LookupException, tf.ConnectivityException,
+        #             tf.ExtrapolationException) as e:
+        #         print e
+        #
+        #     self._RATE.sleep()
 
         # Temp tran and rot for testing purposes
         transformation = [0.657579481614, 0.451981417433, 0.2388352386502]

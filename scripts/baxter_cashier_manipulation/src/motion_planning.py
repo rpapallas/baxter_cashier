@@ -25,11 +25,12 @@
 # System imports
 import argparse
 import sys
+import time
 
 # Baxter specific imports
 import baxter_interface
 from baxter_interface import Gripper
-import baxter_external_devices
+
 from baxter_interface import CHECK_VERSION
 from baxter_core_msgs.srv import (
     SolvePositionIK,
@@ -54,14 +55,14 @@ from baxter_cashier_manipulation.srv import GetUserPose
 
 class CashierPose:
     def __init__(self, x1, y1, z1, x2, y2, z3, w):
-        self.transformation_x = 0.12839
-        self.transformation_y = 0
-        self.transformation_z = 0.06368
+        self.transformation_x = x1
+        self.transformation_y = y1
+        self.transformation_z = z1
 
-        self.rotation_x = 0.542864
-        self.rotation_y = 0.542864
-        self.rotation_z = 0.453099
-        self.rotation_w = 0.453099
+        self.rotation_x = x2
+        self.rotation_y = y2
+        self.rotation_z = z3
+        self.rotation_w = w
 
     def _get_position_and_orientation(self):
         position = Point(self.transformation_x,
@@ -94,12 +95,12 @@ class Shopkeeper:
 
         # This is a static (relative) pose of Baxter's head camera.
         self.relative_head_camera_pose = CashierPose(0.12839,   # Trans X
-                                                     0,         # Trans Y
-                                                     0.06368,   # Trans Z
-                                                     0.542864,  # Rotation X
-                                                     0.542864,  # Rotation Y
-                                                     0.453099,  # Rotation Z
-                                                     0.453099)  # Rotation W
+                                                                                     0,         # Trans Y
+                                                                                     0.06368,   # Trans Z
+                                                                                     0.542864,  # Rotation X
+                                                                                     0.542864,  # Rotation Y
+                                                                                     0.453099,  # Rotation Z
+                                                                                     0.453099)  # Rotation W
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
@@ -107,7 +108,7 @@ class Shopkeeper:
     def get_gripper_for_side(self, side):
         return self.left_gripper if side == "left" else self.right_gripper
 
-    def move_limb_to_position(self, limb_side, joints_configurations, is_get):
+    def move_limb_to_position(self, limb_side, joint_configurations, is_get):
         '''
         Given the limb to be moved as well as the joint configurations
         which is a dictionary of key-value pair with key being the name
@@ -117,7 +118,7 @@ class Shopkeeper:
         '''
 
         if is_get:
-            self.take_money_from_customer(limb_side, joints_configurations)
+            self.take_money_from_customer(limb_side, joint_configurations)
         else:
             self.give_money_to_customer(limb_side, joint_configurations)
 
@@ -134,16 +135,19 @@ class Shopkeeper:
 
         # Calculate the IK to move the hand to Baxter's head camera
         pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
-        joints_to_move_to_head = self.inverse_kinematic_solver(limb_size,
+        joints_to_move_to_head = self.inverse_kinematic_solver(limb_side,
                                                                pose_stamped)
-
-        limb.move_to_joint_positions(joints_to_move_to_head)
+        
+        if joints_to_move_to_head is not None:
+            limb.move_to_joint_positions(joints_to_move_to_head)
+        else:
+            print "Wasn't able to move limb to head camera for money recognition"
 
     def take_money_from_customer(self, limb_side, joint_configurations):
         limb = self.get_limb_for_side(limb_side)
         gripper = self.get_gripper_for_side(limb_side)
 
-        limb.move_to_joint_positions(joints_configurations)
+        limb.move_to_joint_positions(joint_configurations)
 
         # Waiting user to reach the robot to get the money
         time.sleep(2)
@@ -167,7 +171,7 @@ class Shopkeeper:
         Given the limb and a target pose, will calculate the joint
         configuration of the limb.
         '''
-        limb = self.get_limb_for_side(limb_side)
+        # limb = self.get_limb_for_side(limb_side)
         # self.set_neutral_position_of_limb(limb)
 
         ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
@@ -209,7 +213,7 @@ class Shopkeeper:
             get_user_pose = rospy.ServiceProxy('get_user_pose', GetUserPose)
 
             # Use the handle as any other normal function
-            response = get_user_pose(user_number='1', body_part='left_hand')
+            response = get_user_pose(user_number=1, body_part='left_hand')
         except rospy.ServiceException, e:
             print "Service call failed: %s" % e
 
@@ -255,13 +259,16 @@ def main():
     args = setup_args()
 
     baxter = Shopkeeper()
+    baxter.set_neutral_position_of_limb(baxter.left_limb)
     pose_stamped = baxter.get_pose_from_space().get_pose_stamped()
     joint_configuration = baxter.inverse_kinematic_solver(args.limb,
                                                           pose_stamped)
-    if joint_configurations is not None:
+
+    if joint_configuration is not None:
+        print joint_configuration
         baxter.move_limb_to_position(limb_side=args.limb,
-                                     joints_configurations=joint_configuration,
-                                     is_get=True)
+                                     joint_configurations=joint_configuration,
+                                     is_get=False)
 
 
 if __name__ == '__main__':
