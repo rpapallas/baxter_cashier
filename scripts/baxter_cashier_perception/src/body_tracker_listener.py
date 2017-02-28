@@ -43,7 +43,6 @@ class InvalidBodyPartException(Exception):
 class BodyTrackerListener:
     def __init__(self):
         # General default configuration for the listener
-        rospy.init_node("body_tracker_listener")
         self._listener = tf.TransformListener()
         self._RATE = rospy.Rate(0.3)
 
@@ -60,8 +59,9 @@ class BodyTrackerListener:
 
         return True if body_part in possible_body_parts else False
 
-    def start_listening_for(self, user_number, body_part):
-        """
+    # TODO: Consider refactoring the name of the method to make more sense.
+    def start_listening_for(self, request):
+        """user_number   body_part
         Bridge method that starts the Skeleton Tracker, starts the process of
         listening to the pose and kill the skeleton tracker.
 
@@ -74,11 +74,16 @@ class BodyTrackerListener:
             except InvalidBodyPartException as e:
                 print e
 
+        print "Server received: {} and {}".format(request.user_number,
+                                                  request.body_part)
         print "Start listenning..."
-        tran, rot = self._listen(user_number=user_number,  body_part=body_part)
+
+        tran, rot = self._listen(user_number=request.user_number,
+                                 body_part=request.body_part)
+
         print "Finished listenning."
 
-        return tran, rot
+        return GetUserPoseResponse(tran, rot)
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
@@ -94,9 +99,9 @@ class BodyTrackerListener:
         while time.time() < timeout_start + timeout:
             try:
                 # Try to listen for the transformation and rotation of the node
-                (transformation, rotation) =self. _listener.lookupTransform(source,
-                                                                       target,
-                                                                       rospy.Time(0))
+                (transformation, rotation) = self._listener.lookupTransform(source,
+                                                                            target,
+                                                                            rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e
@@ -107,9 +112,19 @@ class BodyTrackerListener:
 
 
 if __name__ == '__main__':
+    rospy.init_node("body_tracker_listener", anonymous=True)
     tracker_listener = BodyTrackerListener()
-    tran, rot = tracker_listener.start_listening_for(user_number=1,
-                                                     body_part="left_hand")
 
-    print "Transformation: {}".format(tran)
-    print "Rotation: {}".format(rot)
+    # Create the so called: "Service Node" of the service.
+    # ====================================================
+    # - Declare a service named 'get_user_pose' with GetUserPose service type.
+    # - All requests to this service are passed to start_listening_for method.
+    # - start_listening_for method is called with instances GetUserPoseRequest
+    #   and returns instances of GetUserPoseResponse.
+
+    s = rospy.Service('get_user_pose',
+                      GetUserPose,
+                      tracker_listener.start_listening_for)
+
+    # Keep from exiting until this node is stopped
+    rospy.spin()
