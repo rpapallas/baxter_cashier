@@ -1,4 +1,4 @@
-int user_number
+int8 user_number
 string body_part
 ---
 float64[] transformation
