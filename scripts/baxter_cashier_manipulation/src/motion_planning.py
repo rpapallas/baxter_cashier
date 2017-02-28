@@ -28,6 +28,7 @@ import sys
 
 # Baxter specific imports
 import baxter_interface
+from baxter_interface import Gripper
 import baxter_external_devices
 from baxter_interface import CHECK_VERSION
 from baxter_core_msgs.srv import (
@@ -50,13 +51,60 @@ from std_msgs.msg import Header
 from baxter_cashier_perception.srv import GetUserPose
 
 
+class CashierPose:
+    def __init__(self, x1, y1, z1, x2, y2, z3, w):
+        self.transformation_x = 0.12839
+        self.transformation_y = 0
+        self.transformation_z = 0.06368
+
+        self.rotation_x = 0.542864
+        self.rotation_y = 0.542864
+        self.rotation_z = 0.453099
+        self.rotation_w = 0.453099
+
+    def _get_position_and_orientation(self):
+        position = Point(self.transformation_x,
+                         self.transformation_y,
+                         self.transformation_z)
+
+        orientation = Quaternion(self.rotation_x,
+                                 self.rotation_y,
+                                 self.rotation_z,
+                                 self.rotation_w)
+
+        return position, orientation
+
+    def get_pose(self):
+        position, orientation = self._get_position_and_orientation()
+        return Pose(position=position, orientation=orientation)
+
+    def get_pose_stamped(self):
+        pose = self.get_pose()
+        header = Header(stamp=rospy.Time.now(), frame_id='base')
+        return PoseStamped(header=header, pose=pose)
+
+
 class Shopkeeper:
     def __init__(self):
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
+        self.left_gripper = Gripper("left")
+        self.right_gripper = Gripper("right")
+
+        # This is a static (relative) pose of Baxter's head camera.
+        self.relative_head_camera_pose = CashierPose(0.12839,   # Trans X
+                                                     0,         # Trans Y
+                                                     0.06368,   # Trans Z
+                                                     0.542864,  # Rotation X
+                                                     0.542864,  # Rotation Y
+                                                     0.453099,  # Rotation Z
+                                                     0.453099)  # Rotation W
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
+
+    def get_gripper_for_side(self, side):
+        return self.left_gripper if side == "left" else self.right_gripper
 
     def move_limb_to_position(self, limb_side, joints_configurations, is_get):
         '''
@@ -74,22 +122,34 @@ class Shopkeeper:
 
     def give_money_to_customer(self, limb_side, joints_configurations):
         limb = self.get_limb_for_side(limb_side)
+        gripper = self.get_gripper_for_side(limb_side)
+
         limb.move_to_joint_positions(joints_configurations)
-        # TODO: Open End-Effector
+
+        # Open/Close the Gripper to catch the money from people's hand
+        gripper.open()
         time.sleep(2)
-        # TODO: Close End-Effector
-        # TODO: Bring hand to Robot's head
+        gripper.close()
+
+        # Calculate the IK to move the hand to Baxter's head camera
+        pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
+        joints_to_move_to_head = self.inverse_kinematic_solver(limb_size,
+                                                               pose_stamped)
+
+        limb.move_to_joint_positions(joints_to_move_to_head)
 
     def take_money_from_customer(self, limb_side, joint_configurations):
         limb = self.get_limb_for_side(limb_side)
+        gripper = self.get_gripper_for_side(limb_side)
+
         limb.move_to_joint_positions(joints_configurations)
 
         # Waiting user to reach the robot to get the money
         time.sleep(2)
 
         # TODO: Ensure that human's hand is touching the money note
-        # TODO: Open End-Effector
-        # TODO: Return to natural position
+        gripper.open()
+        limb.move_to_neutral()
 
     def set_neutral_position_of_limb(self, limb):
         '''
@@ -107,7 +167,7 @@ class Shopkeeper:
         configuration of the limb.
         '''
         limb = self.get_limb_for_side(limb_side)
-        self.set_neutral_position_of_limb(limb)
+        # self.set_neutral_position_of_limb(limb)
 
         ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
@@ -135,7 +195,7 @@ class Shopkeeper:
 
         return None
 
-    def get_pose_stamped_from_space(self):
+    def get_pose_from_space(self):
         '''
         Returns a pose from space.
         '''
@@ -152,16 +212,10 @@ class Shopkeeper:
         except rospy.ServiceException, e:
             print "Service call failed: %s" % e
 
-        x, y, z = response.transformation
-        position = Point(x, y, z)
+        x1, y1, z1 = response.transformation
+        x2, y2, z2, w = response.rotation
 
-        x, y, z, w = response.rotation
-        orientation = Quaternion(x, y, z, w)
-
-        pose = Pose(position=position, orientation=orientation)
-
-        hdr = Header(stamp=rospy.Time.now(), frame_id='base')
-        return PoseStamped(header=hdr, pose=pose)
+        return CashierPose(x1, y1, z1, x2, y2, z2, w)
 
 
 def init():
@@ -200,11 +254,13 @@ def main():
     args = setup_args()
 
     baxter = Shopkeeper()
-    pose_stamped = baxter.get_pose_stamped_from_space()
-    joint_configurations = baxter.inverse_kinematic_solver(args.limb,
-                                                           pose_stamped)
+    pose_stamped = baxter.get_pose_from_space().get_pose_stamped()
+    joint_configuration = baxter.inverse_kinematic_solver(args.limb,
+                                                          pose_stamped)
     if joint_configurations is not None:
-        baxter.move_limb_to_position(args.limb, joint_configurations)
+        baxter.move_limb_to_position(limb_side=args.limb,
+                                     joints_configurations=joint_configuration,
+                                     is_get=True)
 
 
 if __name__ == '__main__':
