@@ -51,6 +51,7 @@ from std_msgs.msg import Header
 
 # Project specific imports
 from baxter_cashier_manipulation.srv import GetUserPose
+from baxter_cashier_manipulation.srv import RecogniseBanknote
 
 
 class CashierPose:
@@ -88,19 +89,26 @@ class CashierPose:
 
 class Shopkeeper:
     def __init__(self):
+        # This is the camera topic to be used for money recognition (Baxter's
+        # head camera or RGB-D camera)
+        self._money_recognition_camera_topic = "/camera/rgb/image_rect_color"
+
+        # Baxter's libms configured
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
+
+        # Baxter Grippers configured
         self.left_gripper = Gripper("left")
         self.right_gripper = Gripper("right")
 
         # This is a static (relative) pose of Baxter's head camera.
-        self.relative_head_camera_pose = CashierPose(0.57354,   # Trans X
-                                                     -0.021107,         # Trans Y
-                                                     0.74713,   # Trans Z
-                                                     -0.02182,  # Rotation X
-                                                     -0.55414,  # Rotation Y
-                                                     0.77549,  # Rotation Z
-                                                     -0.30178)  # Rotation W
+        self.relative_head_camera_pose = CashierPose(0.57354,    # Trans X
+                                                     -0.021107,  # Trans Y
+                                                     0.74713,    # Trans Z
+                                                     -0.02182,   # Rotation X
+                                                     -0.55414,   # Rotation Y
+                                                     0.77549,    # Rotation Z
+                                                     -0.30178)   # Rotation W
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
@@ -122,7 +130,7 @@ class Shopkeeper:
         else:
             self.give_money_to_customer(limb_side, joint_configurations)
 
-    def give_money_to_customer(self, limb_side, joints_configurations):
+    def take_money_from_customer(self, limb_side, joints_configurations):
         limb = self.get_limb_for_side(limb_side)
         gripper = self.get_gripper_for_side(limb_side)
 
@@ -140,10 +148,33 @@ class Shopkeeper:
 
         if joints_to_move_to_head is not None:
             limb.move_to_joint_positions(joints_to_move_to_head)
+            recognised_banknote = get_banknote_value()
+
+            if recognised_banknote is not None:
+                print "Received: " + recognised_banknote
+            else:
+                print "Unable to recognise banknote"
+                # TODO: Return note back to the user
         else:
             print "Wasn't able to move limb to head camera"
 
-    def take_money_from_customer(self, limb_side, joint_configurations):
+    def get_banknote_value(self):
+        # This method blocks until the service 'get_user_pose' is available
+        rospy.wait_for_service('bank_note_recogniser')
+
+        try:
+            # Handle for calling the service
+            recognise_banknote = rospy.ServiceProxy('recognise_banknote',
+                                                    RecogniseBanknote)
+
+            # Use the handle as any other normal function
+            return recognise_banknote(camera_topic=self._money_recognition_camera_topic)
+        except rospy.ServiceException, e:
+            print "Service call failed: %s" % e
+
+        return None
+
+    def give_money_to_customer(self, limb_side, joint_configurations):
         limb = self.get_limb_for_side(limb_side)
         gripper = self.get_gripper_for_side(limb_side)
 

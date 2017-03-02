@@ -59,7 +59,6 @@ class BanknoteRecogniser:
 
 
 if __name__ == '__main__':
-    image_topic = "/camera/rgb/image_rect_color"
     banknote_recogniser = BanknoteRecogniser()
 
     rospy.init_node('bank_note_recogniser', anonymous=True)
