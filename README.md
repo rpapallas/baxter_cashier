@@ -18,18 +18,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
   * [0. Introduction](#0-introduction)
   * [1. Table of Contents](#1-table-of-contents)
-  * [2. About The Project](#2-about-the-project)
-    * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
-  * [3. Installation](#3-installation)
-    * [3.1 Prerequisites](#31-prerequisites)
-    * [3.2 Clone Project](#32-clone-project)
-  * [4. Money Bills](#4-money-bills)
-    * [4.1 Edit Templates](#41-edit-templates)
-    * [4.2 Print bills](#42-print-bills)
-  * [5. Running](#5-running)
-    * [5.1 Run just the Skeleton Tracker](#51-optional-run-just-the-skeleton-tracker)
-
-
+  * [2. How the repository is organised](#2-how-the-repository-is-organised)
 
 2. About The Project
 ====================
@@ -40,7 +29,7 @@ This involves several aspects:
 - Perception: Skeleton Tracking to identify hand-pose of the customer.
 - Manipulation: Baxter to get and give money to the customer's hand.
 
-2.1 How the repository is organised
+2. How the repository is organised
 -----------------------------------
 This repository makes use of most of the project managment features provided by GitHub. Including, issues, milestones, projects/boards.
 
@@ -52,120 +41,4 @@ By the end of the project probably most of the issues will be closed and hence y
 
 Milestones are great way to visualise the project in different phases and issues are assigned to phases.
 
-
-
-3. Installation
-===============
-
-This section describes what you need to install so you can have the project running on Baxter or the Gazebo simulator.
-
-3.1 Prerequisites
------------------
-- Install [ROS Indigo](http://wiki.ros.org/indigo/Installation)
-- Install [Baxter SDK](http://sdk.rethinkrobotics.com/wiki/Workstation_Setup)
-- Install Openni2
-```
-sudo apt-get install ros-indigo-openni2-launch
-sudo apt-get install ros-indigo-openni2-camera
-```
-____
-- Install [`cob_people_perception`](https://github.com/ipa-rmb/cob_people_perception) and [`cob_perception_common`](https://github.com/ipa-rmb/cob_perception_common) library:
-```
-cd ~/catkin_ws/src
-
-git clone git@github.com:ipa-rmb/cob_people_perception.git
-cd cob_people_perception
-rosdep install -r --from-paths .
-
-cd ~/catkin_ws/src
-
-git clone git@github.com:ipa-rmb/cob_perception_common.git
-cd cob_perception_common
-rosdep install -r --from-paths .
-
-cd ~/catkin_ws
-catkin_make
-```
-
-**Important `cob_people_perception` modification**  
-`cob_people_perception` project provides a pacakage called `cob_openni2_tracker` which as the name implies, allows us to have a skeleton tracker. However, if we need to get `tf`s broadcasted we need to make an alteration to the `.yaml` file of the pacakge.
-
-Edit the file `cob_people_perception/cob_openni2_tracker/launch/body_tracker_params.yaml` and find the line with the parameter named `drawFrames`. This parameter will be set to false by default but we need to set it to true. So go ahead and change it to `true`. This will allow the `cob_openni2_tracker` to publish the body parts as `tf`s.
-
-**Error when running cob_openni2_tracker**   
-If you get the error `Get data for NiTE failed` then something is wrong with the NiTE2.
-
-To resolve do the following:  
-`ls -all ~/.ros/`
-
-If the link of NiTE2 is not similar to the following:    
-`NiTE2 -> /home/your_username/catkin_ws/src/cob_people_perception/libnite2/common/lib/NiTE2/`
-
-Then delete this file by running `rm -r ~/.ros/NiTE2` and rerun `catkin_make` in catkin_ws directory.
-
-____
-
-- Install [`cv_bridge`](http://wiki.ros.org/cv_bridge) and [`vision_opencv`](http://wiki.ros.org/vision_opencv) required for the perception part of the project:
-```
-sudo apt-get install ros-indigo-cv-bridge
-sudo apt-get install ros-indigo-vision-opencv
-```
-- Install `imutils`
-```
-sudo pip install imutils
-```
-
-3.2 Clone Project
------------------
-Now that you have installed all required libraries you need to clone this project.
-
-Either in `catkin_ws/src` or `ros_ws/src` clone this project:
-```
-git clone git@github.com:papallas/baxter_cashier.git
-```
-
-
-
-4. Money Bills
-==============
-This section is about the money bills that are used in the project. Money bills are used between Baxter and the customer to establish a payment. This project works with defined money bills (fake money bills).
-
-<table>
- <tr>
-   <td>
-    <img src="https://cloud.githubusercontent.com/assets/6514550/23165412/e91d7e84-f833-11e6-8ffa-8bc387f479c5.png" alt="Five Bill" width="200">
-   </td>
-   <td>
-    <img src="https://cloud.githubusercontent.com/assets/6514550/23165411/e9199c1a-f833-11e6-9d5e-c13342916926.png" alt="One Bill" width="200">
-   </td>
- </tr>
-</table>
-
-4.1 Edit Templates
-------------------
-The money bills were created using the Pixelmator software. If you need to edit or create new notes the files are available under `TODO`.
-
-4.2 Print bills
----------------
-You can print bills as images. The images are available under `TODO` and when printing A4 paper put the scale to `45%` and then with a scissor cut the bill.
-
-
-
-5. Running
-==========
-
-5.1 (Optional) Run just the Skeleton Tracker
---------------------------------------------
-To run the skeleton tracker individually, here are the steps required (in separate terminal windows):
-```
-roslaunch openni2_launch openni2.launch depth_registration:=true
-roslaunch cob_openni2_tracker body_tracker_nodelet.launch
-rosrun rviz rviz
-```
-In Rviz now, set the `fixed_frame` to `camera_link`. Now add a `tf`. If you move in front of the camera sensor you should be able to see tf shown in space for each skeleton part.
-
-Note how the `tf` are published: 
-- Parent: `/camera_depth_optical_frame`
-- Child: `cob_body_tracker/user_1/left_hand`
-- Child: `cob_body_tracker/user_1/head`
-- etc
+Finally, **detailed** instructions on how to install, configure, print the banknotes and actually anything required to run the project is available in the Wiki of the project. Decided to move the instructions there to be able to split the instructions into pages for easier navigation. You can find the wiki [here](https://github.com/papallas/baxter_cashier/wiki).
