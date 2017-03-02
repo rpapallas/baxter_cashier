@@ -18,7 +18,9 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
   * [0. Introduction](#0-introduction)
   * [1. Table of Contents](#1-table-of-contents)
-  * [2. How the repository is organised](#2-how-the-repository-is-organised)
+  * [2. About The Project](#2-about-the-project)
+    * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
+    * [2.2 Make use of project's wiki](#22-make-use-of-projects-wiki)
 
 2. About The Project
 ====================
@@ -29,7 +31,7 @@ This involves several aspects:
 - Perception: Skeleton Tracking to identify hand-pose of the customer.
 - Manipulation: Baxter to get and give money to the customer's hand.
 
-2. How the repository is organised
+2.1 How the repository is organised
 -----------------------------------
 This repository makes use of most of the project managment features provided by GitHub. Including, issues, milestones, projects/boards.
 
@@ -41,4 +43,6 @@ By the end of the project probably most of the issues will be closed and hence y
 
 Milestones are great way to visualise the project in different phases and issues are assigned to phases.
 
-Finally, **detailed** instructions on how to install, configure, print the banknotes and actually anything required to run the project is available in the Wiki of the project. Decided to move the instructions there to be able to split the instructions into pages for easier navigation. You can find the wiki [here](https://github.com/papallas/baxter_cashier/wiki).
+2.2 Make use of project's wiki
+------------------------------
+**Detailed** instructions on how to install, configure, print the banknotes and actually anything required to run the project is available in the Wiki of the project. Decided to move the instructions there to be able to split the instructions into pages for easier navigation. You can find the wiki [here](https://github.com/papallas/baxter_cashier/wiki).
