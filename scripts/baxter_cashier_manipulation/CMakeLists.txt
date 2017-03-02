@@ -56,6 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
    FILES
    GetUserPose.srv
+   RecogniseBanknote.srv
  )
 
 ## Generate actions in the 'action' folder
