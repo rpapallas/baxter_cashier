@@ -64,7 +64,14 @@ class CashierPose:
         self.rotation_y = y2
         self.rotation_z = z3
         self.rotation_w = w
-
+    def __str__(self):
+        return "{} {} {} {} {} {} {}".format(self.transformation_x,
+                                             self.transformation_y,
+                                             self.transformation_z,
+                                             self.rotation_x,
+                                             self.rotation_y,
+                                             self.rotation_z,
+                                             self.rotation_w)
     def _get_position_and_orientation(self):
         position = Point(self.transformation_x,
                          self.transformation_y,
@@ -148,7 +155,7 @@ class Shopkeeper:
 
         if joints_to_move_to_head is not None:
             limb.move_to_joint_positions(joints_to_move_to_head)
-            recognised_banknote = get_banknote_value()
+            recognised_banknote = None #get_banknote_value()
 
             if recognised_banknote is not None:
                 print "Received: " + recognised_banknote
@@ -217,15 +224,13 @@ class Shopkeeper:
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Service call failed: %s" % (e,))
 
-        if any(resp.isValid):
+        if (resp.isValid[0]):
             print("Valid Joint Solution Found")
 
-            for i in range(len(resp.isValid)):
-                if resp.isValid[i]:
-                    # Format solution into Limb API-compatible dictionary
-                    limb_joints = dict(zip(resp.joints[0].name,
-                                           resp.joints[0].position))
-                    return limb_joints
+            # Format solution into Limb API-compatible dictionary
+            limb_joints = dict(zip(resp.joints[0].name,
+                                   resp.joints[0].position))
+            return limb_joints
         else:
             print "No solution found."
 
@@ -251,7 +256,9 @@ class Shopkeeper:
         x1, y1, z1 = response.transformation
         x2, y2, z2, w = response.rotation
 
-        return CashierPose(x1, y1, z1, x2, y2, z2, w)
+        x = CashierPose(x1, y1, z1, x2, y2, z2, w)
+        print x
+        return x
 
 
 def init():
