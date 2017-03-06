@@ -36,8 +36,7 @@ class Calibrator:
             self.quaternion = [0, 0, 0, 0]
             self.xyz = [0.0, 0.0, 0.0]
             self.rpy = [0, 0, 0]
-
-        self.xyz_transformed = [0, 0, 0]
+            self.xyz_transformed = [0, 0, 0]
 
         # The class' brodcasters
         self.brodcaster_1 = tf.TransformBroadcaster()
@@ -61,6 +60,7 @@ class Calibrator:
             self.quaternion = [0, 0, 0, 0]
             self.xyz = [0.0, 0.0, 0.0]
             self.rpy = [0, 0, 0]
+            self.xyz_transformed = [0, 0, 0]
             return
 
         files = [f for f in listdir(self.file_save_directory) if isfile(join(self.file_save_directory, f))]
@@ -70,6 +70,7 @@ class Calibrator:
             self.quaternion = [0, 0, 0, 0]
             self.xyz = [0.0, 0.0, 0.0]
             self.rpy = [0, 0, 0]
+            self.xyz_transformed = [0, 0, 0]
             return
 
         print "Here are the available files:"
@@ -140,13 +141,13 @@ class Calibrator:
         self.cv2.namedWindow('image')
 
         # Create trackbars
-        self.cv2.createTrackbar('x', 'image', int(self.xyz[0]), 3000, self._callback)
-        self.cv2.createTrackbar('y', 'image', int(self.xyz[1]), 3000, self._callback)
-        self.cv2.createTrackbar('z', 'image', int(self.xyz[2]), 3000, self._callback)
+        self.cv2.createTrackbar('x', 'image', int(self.xyz[0]), 6000, self._callback)
+        self.cv2.createTrackbar('y', 'image', int(self.xyz[1]), 6000, self._callback)
+        self.cv2.createTrackbar('z', 'image', int(self.xyz[2]), 6000, self._callback)
 
-        self.cv2.createTrackbar('Roll',  'image', int(self.rpy[0]), 3600, self._callback)
-        self.cv2.createTrackbar('Pitch', 'image', int(self.rpy[1]), 3600, self._callback)
-        self.cv2.createTrackbar('Yaw',   'image', int(self.rpy[2]), 3600, self._callback)
+        self.cv2.createTrackbar('Roll',  'image', int(self.rpy[0]), 6600, self._callback)
+        self.cv2.createTrackbar('Pitch', 'image', int(self.rpy[1]), 6600, self._callback)
+        self.cv2.createTrackbar('Yaw',   'image', int(self.rpy[2]), 6600, self._callback)
 
     def calculate_values(self):
         def apply_formula(value):
@@ -221,8 +222,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.l:
-        calibrator = Calibrator(base_topic="camera_depth_optical_frame",
-                                target_topic="torso", load_from_file=True)
+        calibrator = Calibrator(base_topic="torso",
+                                target_topic="camera_depth_optical_frame", load_from_file=True)
     else:
         calibrator = Calibrator(base_topic="camera_depth_optical_frame",
                                 target_topic="torso")
