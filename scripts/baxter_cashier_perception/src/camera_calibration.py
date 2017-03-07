@@ -116,6 +116,7 @@ class Calibrator:
         self.xyz_transformed = [0, 0, 0]
         self.xyz = [0.0, 0.0, 0.0]
         self.rpy = [0, 0, 0]
+        self.file_name = None
 
         # Topics that will be used to broadcast tf
         self.base_topic = base_topic
@@ -136,10 +137,12 @@ class Calibrator:
 
         # Ask for file name to store the new values for this session
         if self.file_name is None or not self.load_from_file:
-            self.file_name = raw_input("Enter a name for the file to save the \
-                                       values from this session (something so \
-                                       that you can recognise it next time, \
-                                       please do use .txt at the end): ")
+            if self.file_name is None:
+                print "No files found to load. Starting a new configuration..."
+
+            # Ask for new file name
+            message = "Enter a new file name to save configuration: "
+            self.file_name = raw_input(message)
 
         # OpenCV for window
         self.cv2 = cv2
@@ -154,6 +157,8 @@ class Calibrator:
         starting from zero.
         """
         list_of_files = self.database.get_available_files()
+
+        if list_of_files is None: return
 
         print "Available files:"
 
@@ -270,11 +275,11 @@ if __name__ == '__main__':
 
     # Load values from file
     if args.l:  # l for load
-        calibrator = Calibrator(base_topic=base_topic=,
-                                target_topic=target_topic=,
+        calibrator = Calibrator(base_topic=base_topic,
+                                target_topic=target_topic,
                                 load_from_file=True)
     else:
-        calibrator = Calibrator(base_topic=base_topic=,
-                                target_topic=target_topic=)
+        calibrator = Calibrator(base_topic=base_topic,
+                                target_topic=target_topic)
 
     calibrator.calibrate()
