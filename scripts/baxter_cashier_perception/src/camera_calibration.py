@@ -182,14 +182,14 @@ class Calibrator:
 
         # Create trackbars
         x, y, z = [int(v) for v in self.xyz]
-        self.cv2.createTrackbar('x', 'image', x, 6000, self._callback)
-        self.cv2.createTrackbar('y', 'image', y, 6000, self._callback)
-        self.cv2.createTrackbar('z', 'image', z, 6000, self._callback)
+        self.cv2.createTrackbar('x', 'image', x, 12000, self._callback)
+        self.cv2.createTrackbar('y', 'image', y, 12000, self._callback)
+        self.cv2.createTrackbar('z', 'image', z, 12000, self._callback)
 
         r, p, y = [int(v) for v in self.rpy]
-        self.cv2.createTrackbar('Roll',  'image', r, 6600, self._callback)
-        self.cv2.createTrackbar('Pitch', 'image', p, 6600, self._callback)
-        self.cv2.createTrackbar('Yaw',   'image', y, 6600, self._callback)
+        self.cv2.createTrackbar('Roll',  'image', r, 12600, self._callback)
+        self.cv2.createTrackbar('Pitch', 'image', p, 12600, self._callback)
+        self.cv2.createTrackbar('Yaw',   'image', y, 12600, self._callback)
 
     def calculate_values(self):
         """
@@ -200,7 +200,7 @@ class Calibrator:
             return value * np.pi / 1800
 
         # Perform (1000 - 1) to x, y and z using list comprehension
-        self.xyz_transformed = [v / 1000.0 - 1 for v in self.xyz]
+        self.xyz_transformed = [v / 1000.0 - 6 for v in self.xyz]
 
         # Using map function we get new values for r, p and y
         # based on static formula computed by `apply_formula` function
@@ -270,8 +270,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Topics to be used to publish the tf.
-    base_topic = "torso"
-    target_topic = "camera_depth_optical_frame"
+    base_topic = "camera_link"
+    target_topic = "torso"
 
     # Load values from file
     if args.l:  # l for load
