@@ -52,6 +52,7 @@ from std_msgs.msg import Header
 # Project specific imports
 from baxter_cashier_manipulation.srv import GetUserPose
 from baxter_cashier_manipulation.srv import RecogniseBanknote
+import rosgraph.masterapi
 
 
 class CashierPose:
@@ -93,6 +94,17 @@ class CashierPose:
         header = Header(stamp=rospy.Time.now(), frame_id='base')
         return PoseStamped(header=header, pose=pose)
 
+    def is_empty(self):
+        value = [self.transformation_x,
+                 self.transformation_y,
+                 self.transformation_z,
+                 self.rotation_x,
+                 self.rotation_y,
+                 self.rotation_z,
+                 self.rotation_w]
+
+        return all(map(lambda v: v == 0, value))
+
 
 class Shopkeeper:
     def __init__(self):
@@ -104,9 +116,15 @@ class Shopkeeper:
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
 
+        self.left_limb.set_joint_position_speed(0.1)
+        self.right_limb.set_joint_position_speed(0.1)
+
         # Baxter Grippers configured
-        self.left_gripper = Gripper("left")
-        self.right_gripper = Gripper("right")
+        self.left_gripper = Gripper("left", CHECK_VERSION)
+        self.right_gripper = Gripper("right", CHECK_VERSION)
+
+        self.left_gripper.calibrate()
+        self.right_gripper.calibrate()
 
         # This is a static (relative) pose of Baxter's head camera.
         self.relative_head_camera_pose = CashierPose(0.57354,    # Trans X
@@ -140,7 +158,7 @@ class Shopkeeper:
     def take_money_from_customer(self, limb_side, joints_configurations):
         limb = self.get_limb_for_side(limb_side)
         gripper = self.get_gripper_for_side(limb_side)
-        print "I came here"
+
         limb.move_to_joint_positions(joints_configurations)
 
         # Open/Close the Gripper to catch the money from people's hand
@@ -238,6 +256,10 @@ class Shopkeeper:
 
         return None
 
+    def get_list_of_users(self):
+        master = rosgraph.masterapi.Master('/camera_depth_optical_frame')
+        print master.getPublishedTopics('/cob_body_tracker')
+
     def get_pose_from_space(self):
         '''
         Returns a pose from space.
@@ -299,19 +321,22 @@ def main():
     found = False
 
     baxter = Shopkeeper()
-    baxter.set_neutral_position_of_limb(baxter.left_limb)
-    while not found:
-        pose_stamped = baxter.get_pose_from_space().get_pose_stamped()
-        joint_configuration = baxter.inverse_kinematic_solver(args.limb,
-                                                              pose_stamped)
+    baxter.get_list_of_users()
 
-        if joint_configuration is not None:
-            print joint_configuration
-            found = True
-            baxter.move_limb_to_position(limb_side=args.limb,
-                                         joint_configurations=joint_configuration,
-                                         is_get=True)
-            baxter.set_neutral_position_of_limb(baxter.get_limb_for_side(args.limb))
+    while True:
+        pose = baxter.get_pose_from_space()
+
+        if not pose_stamped.is_empty
+            joint_configuration = baxter.inverse_kinematic_solver(args.limb,
+                                                                  pose.get_pose_stamped())
+
+            if joint_configuration is not None:
+                print joint_configuration
+                found = True
+                baxter.move_limb_to_position(limb_side=args.limb,
+                                             joint_configurations=joint_configuration,
+                                             is_get=True)
+                baxter.set_neutral_position_of_limb(baxter.get_limb_for_side(args.limb))
 
 
 if __name__ == '__main__':
