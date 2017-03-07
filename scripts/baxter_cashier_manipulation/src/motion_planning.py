@@ -140,13 +140,15 @@ class Shopkeeper:
     def take_money_from_customer(self, limb_side, joints_configurations):
         limb = self.get_limb_for_side(limb_side)
         gripper = self.get_gripper_for_side(limb_side)
-
+        print "I came here"
         limb.move_to_joint_positions(joints_configurations)
 
         # Open/Close the Gripper to catch the money from people's hand
         gripper.open()
         time.sleep(2)
         gripper.close()
+
+        return
 
         # Calculate the IK to move the hand to Baxter's head camera
         pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
@@ -240,7 +242,6 @@ class Shopkeeper:
         '''
         Returns a pose from space.
         '''
-
         # This method blocks until the service 'get_user_pose' is available
         rospy.wait_for_service('get_user_pose')
 
@@ -295,19 +296,47 @@ def setup_args():
 def main():
     init()
     args = setup_args()
+    found = False
 
     baxter = Shopkeeper()
     baxter.set_neutral_position_of_limb(baxter.left_limb)
-    pose_stamped = baxter.get_pose_from_space().get_pose_stamped()
-    joint_configuration = baxter.inverse_kinematic_solver(args.limb,
-                                                          pose_stamped)
+    while not found:
+        pose_stamped = baxter.get_pose_from_space().get_pose_stamped()
+        joint_configuration = baxter.inverse_kinematic_solver(args.limb,
+                                                              pose_stamped)
 
-    if joint_configuration is not None:
-        print joint_configuration
-        baxter.move_limb_to_position(limb_side=args.limb,
-                                     joint_configurations=joint_configuration,
-                                     is_get=False)
+        if joint_configuration is not None:
+            print joint_configuration
+            found = True
+            baxter.move_limb_to_position(limb_side=args.limb,
+                                         joint_configurations=joint_configuration,
+                                         is_get=True)
+            baxter.set_neutral_position_of_limb(baxter.get_limb_for_side(args.limb))
 
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+
+
+# Valid Joint Solution Found
+# {'left_w0': 2.106294876484381, 'left_w1': -1.1005751521035783, 'left_w2': 1.4644689203366548, 'left_e0': -1.6411138752279184, 'left_e1': 2.2642346774524866, 'left_s0': -0.1384362423002121, 'left_s1': 0.6967474257859355}
+# I came here
+# Moving limb to neutral position...
+# Limb's neutral position set.
+#
+# Exiting example...
+# [baxter - http://10.0.0.101:11311] rafael@csros03:~/ros_ws$ rosrun baxter_cashier_manipulation motion_planning.py -l left
+# Initializing node...
+# Getting robot state...
+# Enabling robot...
+# [INFO] [WallTime: 1488902771.318287] Robot Enabled
+# Moving limb to neutral position...
+# Limb's neutral position set.
+# 0.422272155762 0.0783126983643 0.708687805176 0.0 0.0 0.0 1.0
+# Valid Joint Solution Found
+# {'left_w0': 1.8141469376672572, 'left_w1': -1.47079632679, 'left_w2': 1.6268416838401842, 'left_e0': -1.4891417570892072, 'left_e1': 2.2596985265257055, 'left_s0': -0.1514685648331161, 'left_s1': 0.254126947499098}
+# I came here
+# Moving limb to neutral position...
+# Limb's neutral position set.
