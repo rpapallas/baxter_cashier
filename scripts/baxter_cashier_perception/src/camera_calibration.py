@@ -1,181 +1,228 @@
 #!/usr/bin/python
 
-"""
-This class allows two cameras to align with each other by publishing a tf.
-Creator: Muhannad, University of Leeds
-"""
-
-import rospy
-import tf
-import numpy as np
-import cv2
+# Python specific imports
+import argparse
+import sys
 import os
-from os import listdir
 from os.path import isfile
 from os.path import join
 from os.path import expanduser
 import argparse
-import signal
-import sys
 
-class Calibrator:
-    """Calibrator aligns two camera's POV to a single one."""
+# ROS specific imports
+import rospy
+import tf
 
-    def __init__(self, base_topic, target_topic, load_from_file=False):
-        """Default constructor configuring the class properties."""
-        self.file_save_directory = expanduser("~") + "/baxter_cashier_calibrator_files/"
-        rospy.init_node('camera_calibrator_tf_broadcaster')
-        self.rate = rospy.Rate(100.0)
+# Other imports
+import numpy as np
+import cv2
 
-        # Some initialisation
-        self.load_from_file = load_from_file
 
-        if self.load_from_file:
-            self.load_values_from_file()
-        else:
-            self.quaternion = [0, 0, 0, 0]
-            self.xyz = [0.0, 0.0, 0.0]
-            self.rpy = [0, 0, 0]
-            self.xyz_transformed = [0, 0, 0]
+class BasicDatabase:
+    """Stores the values from the script to a file for later use."""
 
-        # The class' brodcasters
-        self.brodcaster_1 = tf.TransformBroadcaster()
+    def __init__(self):
+        """
+        Default constructor to setup the directory to store and load the
+        values.
+        """
 
-        # Topics that will be used to broadcast tf
-        self.base_topic = base_topic
-        self.target_topic = target_topic
+        # Path where script will store the files
+        path = expanduser("~") + "/baxter_cashier_calibrator_files/"
+        self.file_save_directory = path
 
-        if not self.load_from_file:
-            self.file_name = raw_input("Enter a name for the file to save the values from this session (something so that you can recognise it next time, please do use .txt or anything at the end): ")
-
-        self.cv2 = cv2
-
-        # Initialise the trackbars (sliders) for the CV window
-        self._create_trackbars_for_window()
-
-    def load_values_from_file(self):
-        # List all files in the store directory
-        if not os.path.exists(self.file_save_directory):
-            print "Nothing saved so far. Can't load anything."
-            self.quaternion = [0, 0, 0, 0]
-            self.xyz = [0.0, 0.0, 0.0]
-            self.rpy = [0, 0, 0]
-            self.xyz_transformed = [0, 0, 0]
-            return
-
-        files = [f for f in listdir(self.file_save_directory) if isfile(join(self.file_save_directory, f))]
-
-        if len(files) == 0:
-            print "Nothing saved so far. Can't load anything"
-            self.quaternion = [0, 0, 0, 0]
-            self.xyz = [0.0, 0.0, 0.0]
-            self.rpy = [0, 0, 0]
-            self.xyz_transformed = [0, 0, 0]
-            return
-
-        print "Here are the available files:"
-
-        for i in range(0, len(files)):
-            print "{}. {}".format(i, files[i])
-
-        print ""
-
-        file_number = int(raw_input("Please enter the number of the file you wish to load: "))
-
-        if file_number < 0 or file_number >= len(files):
-            print "The number you have entered is not in the list. Nothing loaded."
-            return
-
-        self.file_name = join(self.file_save_directory, files[file_number])
-        with open(self.file_name) as f:
-            content = f.readlines()
-
-        # you may also want to remove whitespace characters like `\n` at the end of each line
-        content = [x.strip() for x in content]
-
-        x, y, z = [float(num) for num in content[1:4]]
-        q1, q2, q3, q4 = [float(num) for num in content[5:9]]
-        r, p, y = [float(num) for num in content[10:]]
-
-        self.quaternion = [q1, q2, q3, q4]
-        self.xyz = [x, y, z]
-        self.rpy = [r, p, y]
-
-        self.calculate_values()
-
-        print "Quaternion and XYZ values set from file successfuly."
-
-    def save_values_to_file(self):
+        # If directory doesn't exist, then create that directory.
         if not os.path.exists(self.file_save_directory):
             os.makedirs(self.file_save_directory)
 
-        file_name = self.file_name.replace(" ", "_")
+    def get_available_files(self):
+        """
+        Returns a list of available files in the directory. This includes only
+        files and not sub-directories. The usage of this function is to show
+        to the user a possible number of fils to choose from to load values.
+        """
+        files = [f for f in os.listdir(self.file_save_directory)
+                 if isfile(join(self.file_save_directory, f))]
+
+        return files if len(files) > 0 else None
+
+    def load_values(self, file_name):
+        """
+        Given a file name, this method will load the values from the file and
+        will return xyz and rpy values.
+        """
+        # Load file
+        file_path = join(self.file_save_directory, file_name)
+
+        with open(file_path) as f:
+            content = f.readlines()
+
+        # Remove whitespace characters like `\n` at the end of each line
+        content = [x.strip() for x in content]
+
+        # Parse xyz and rpy (casting to ints)
+        xyz = [int(num) for num in content[0:3]]  # First three values
+        rpy = [int(num) for num in content[3:]]   # Last three values
+
+        return xyz, rpy
+
+    def save_values_to_file(self, file_name, xyz, rpy):
+        """This method will store the xyz and rpy values to file."""
 
         full_file_path = join(self.file_save_directory, file_name)
         store_values_file = open(full_file_path, "w")
 
-        x, y, z = self.xyz
-        store_values_file.write("XYZ:" + "\n")
+        x, y, z = xyz
         store_values_file.write(str(x) + "\n")
         store_values_file.write(str(y) + "\n")
         store_values_file.write(str(z) + "\n")
 
-        q1, q2, q3, q4 = self.quaternion
-        store_values_file.write("Quaternion:" + "\n")
-        store_values_file.write(str(q1) + "\n")
-        store_values_file.write(str(q2) + "\n")
-        store_values_file.write(str(q3) + "\n")
-        store_values_file.write(str(q4) + "\n")
-
-        r, p, y = self.rpy
-        store_values_file.write("rpy:" + "\n")
+        r, p, y = rpy
         store_values_file.write(str(r) + "\n")
         store_values_file.write(str(p) + "\n")
         store_values_file.write(str(y) + "\n")
 
         store_values_file.close()
-        print "Values saved to file."
 
+
+class Calibrator:
+    """Calibrator aligns two camera's POV to a single one."""
+
+    def __init__(self, base_topic, target_topic, load_from_file=False):
+        """
+        Class constructor that do some important initialisation.
+
+        - Creates the required rospy configuration
+        - Creates the Database instance to load or store values for this script
+        - Set the class' values to default or loads from file.
+        - Ask from the user to enter file name to store new values if is
+        values are not loaded from file.
+        """
+        # Basic rospy configuration
+        rospy.init_node('camera_calibrator_tf_broadcaster')
+        self.rate = rospy.Rate(100.0)
+
+        # Flag indicating if the script will load values from file or not.
+        self.load_from_file = load_from_file
+
+        # Basic-flat database to store the values of the script.
+        self.database = BasicDatabase()
+
+        # The class' brodcasters
+        self.broadcaster = tf.TransformBroadcaster()
+
+        # Default values
+        self.quaternion = [0, 0, 0, 0]
+        self.xyz_transformed = [0, 0, 0]
+        self.xyz = [0.0, 0.0, 0.0]
+        self.rpy = [0, 0, 0]
+
+        # Topics that will be used to broadcast tf
+        self.base_topic = base_topic
+        self.target_topic = target_topic
+
+        # Load values from file
+        if self.load_from_file:
+            # Ask from the user for a file name from a list of possible files,
+            # and then load the values from that file.
+            self.file_name = self._get_file_name_from_user()
+
+            if self.file_name is not None:
+                self.xyz, self.rpy = self.database.load_values(self.file_name)
+
+            # Since we have load the values from file, we want to calculate the
+            # quaternion from these values as well as a small tuning on xyz.
+            self.calculate_values()
+
+        # Ask for file name to store the new values for this session
+        if self.file_name is None or not self.load_from_file:
+            self.file_name = raw_input("Enter a name for the file to save the \
+                                       values from this session (something so \
+                                       that you can recognise it next time, \
+                                       please do use .txt at the end): ")
+
+        # OpenCV for window
+        self.cv2 = cv2
+
+        # Initialise the trackbars (sliders) for the CV window
+        self._create_trackbars_for_window()
+
+    def _get_file_name_from_user(self):
+        """
+        Asks from the user to choose a file from a list of possible files found
+        in the directory. The user should enter a number from that list
+        starting from zero.
+        """
+        list_of_files = self.database.get_available_files()
+
+        print "Available files:"
+
+        for i in range(0, len(list_of_files)):
+            print "{}. {}".format(i, list_of_files[i])
+
+        file_number = int(raw_input("Enter file number from the list: "))
+
+        if file_number >= 0 and file_number < len(list_of_files):
+            return list_of_files[file_number]
+
+        return None
 
     def _create_trackbars_for_window(self):
+        """
+        Called only once to initialise and created the OpenCV window with
+        the trackbars. The values of trackbars will be set to 0 if not loading
+        from file, or will be set to the last used values if loaded from file.
+        """
         self.cv2.namedWindow('image')
 
         # Create trackbars
-        self.cv2.createTrackbar('x', 'image', int(self.xyz[0]), 6000, self._callback)
-        self.cv2.createTrackbar('y', 'image', int(self.xyz[1]), 6000, self._callback)
-        self.cv2.createTrackbar('z', 'image', int(self.xyz[2]), 6000, self._callback)
+        x, y, z = [int(v) for v in self.xyz]
+        self.cv2.createTrackbar('x', 'image', x, 6000, self._callback)
+        self.cv2.createTrackbar('y', 'image', y, 6000, self._callback)
+        self.cv2.createTrackbar('z', 'image', z, 6000, self._callback)
 
-        self.cv2.createTrackbar('Roll',  'image', int(self.rpy[0]), 6600, self._callback)
-        self.cv2.createTrackbar('Pitch', 'image', int(self.rpy[1]), 6600, self._callback)
-        self.cv2.createTrackbar('Yaw',   'image', int(self.rpy[2]), 6600, self._callback)
+        r, p, y = [int(v) for v in self.rpy]
+        self.cv2.createTrackbar('Roll',  'image', r, 6600, self._callback)
+        self.cv2.createTrackbar('Pitch', 'image', p, 6600, self._callback)
+        self.cv2.createTrackbar('Yaw',   'image', y, 6600, self._callback)
 
     def calculate_values(self):
+        """
+        When xyz and rpy values are given from the user, some formulas needs to
+        be applied to get the xyz corrected and the quaternion value.
+        """
         def apply_formula(value):
             return value * np.pi / 1800
 
+        # Perform (1000 - 1) to x, y and z using list comprehension
         self.xyz_transformed = [v / 1000.0 - 1 for v in self.xyz]
 
-        # Using List Comprehension we get new values for r, p and y
-        # based on static formula computed by `_get_new_value_for` static
-        # method
+        # Using map function we get new values for r, p and y
+        # based on static formula computed by `apply_formula` function
         roll, pitch, yaw = map(apply_formula, self.rpy)
 
         # Using Euler method calculates the quaternion from roll, pitch and yaw
         self.quaternion = tf.transformations.quaternion_from_euler(roll,
                                                                    pitch,
                                                                    yaw)
+
     def _callback(self, _):
-        # Tune xyz and rpy with the current positions of the trackbars
+        """
+        This callback function is called whenever the trackbars from the OpenCV
+        window are changed.
+        """
+        # Get xyz and rpy current position from the trackbars
         self.xyz = self._extract_xyz_from_trackbars()
         self.rpy = self._extract_rpy_from_trackbars()
 
+        # Calculate the new values based on the new configuration
         self.calculate_values()
 
-        self.save_values_to_file()
-        self._print_current_configuration()
+        # Auto-save new values to file.
+        self.database.save_values_to_file(self.file_name, self.xyz, self.rpy)
 
     def _extract_xyz_from_trackbars(self):
-        """ Extracts x, y and z values from CV2 trackbars. """
+        """Extracts x, y and z values from CV2 trackbars."""
 
         x = self.cv2.getTrackbarPos('x', 'image')
         y = self.cv2.getTrackbarPos('y', 'image')
@@ -184,7 +231,7 @@ class Calibrator:
         return [x, y, z]
 
     def _extract_rpy_from_trackbars(self):
-        """ Extracts r, p and y values from CV2 trackbars. """
+        """Extracts r, p and y values from CV2 trackbars."""
 
         r = self.cv2.getTrackbarPos('Roll', 'image')
         p = self.cv2.getTrackbarPos('Pitch', 'image')
@@ -192,40 +239,42 @@ class Calibrator:
 
         return [r, p, y]
 
-    def _print_current_configuration(self):
-        print "xyz: {} | rpy: {} | q: {}".format(self.xyz,
-                                                 self.rpy,
-                                                 self.quaternion)
-
     def calibrate(self):
         """Method performs the basic operation."""
-        print "Start publishing to tf..."
+        print "Start publishing tf..."
 
         while not rospy.is_shutdown():
             img = np.zeros((300, 512, 3), np.uint8)
             self.cv2.imshow('image', img)
             _ = self.cv2.waitKey(1) & 0xFF
 
-            self.brodcaster_1.sendTransform(tuple(self.xyz_transformed),
-                                            tuple(self.quaternion),
-                                            rospy.Time.now(),
-                                            self.base_topic,
-                                            self.target_topic)
+            self.broadcaster.sendTransform(tuple(self.xyz_transformed),
+                                           tuple(self.quaternion),
+                                           rospy.Time.now(),
+                                           self.base_topic,
+                                           self.target_topic)
 
             self.rate.sleep()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", action="store_true", help="Load XYZ and Quaternion values from file")
+    parser.add_argument("-l", action="store_true",
+                        help="Load values from file")
 
     args = parser.parse_args()
 
-    if args.l:
-        calibrator = Calibrator(base_topic="torso",
-                                target_topic="camera_depth_optical_frame", load_from_file=True)
+    # Topics to be used to publish the tf.
+    base_topic = "torso"
+    target_topic = "camera_depth_optical_frame"
+
+    # Load values from file
+    if args.l:  # l for load
+        calibrator = Calibrator(base_topic=base_topic=,
+                                target_topic=target_topic=,
+                                load_from_file=True)
     else:
-        calibrator = Calibrator(base_topic="camera_depth_optical_frame",
-                                target_topic="torso")
+        calibrator = Calibrator(base_topic=base_topic=,
+                                target_topic=target_topic=)
 
     calibrator.calibrate()
