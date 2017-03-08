@@ -88,7 +88,7 @@ class BodyTrackerListener:
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
-        source = '/camera_depth_optical_frame'
+        source = '/torso'
         target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
 
         timeout_start = time.time()
@@ -100,9 +100,12 @@ class BodyTrackerListener:
         while time.time() < timeout_start + timeout:
             try:
                 # Try to listen for the transformation and rotation of the node
-                (transformation, rotation) = self._listener.lookupTransform(source,
-                                                                            target,
-                                                                            rospy.Time(0))
+                (transformation, _) = self._listener.lookupTransform(source,
+                                                                     target,
+                                                                     rospy.Time(0))
+                (_, rotation) = self._listener.lookupTransform("camera_link",
+                                                               "camera_depth_optical_frame",
+                                                               rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e

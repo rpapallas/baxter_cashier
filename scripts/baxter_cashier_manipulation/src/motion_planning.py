@@ -116,8 +116,8 @@ class Shopkeeper:
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
 
-        self.left_limb.set_joint_position_speed(0.1)
-        self.right_limb.set_joint_position_speed(0.1)
+        self.left_limb.set_joint_position_speed(0.2)
+        self.right_limb.set_joint_position_speed(0.2)
 
         # Baxter Grippers configured
         self.left_gripper = Gripper("left", CHECK_VERSION)
@@ -163,10 +163,9 @@ class Shopkeeper:
 
         # Open/Close the Gripper to catch the money from people's hand
         gripper.open()
-        time.sleep(2)
+        time.sleep(1)
         gripper.close()
-
-        return
+        time.sleep(1)
 
         # Calculate the IK to move the hand to Baxter's head camera
         pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
@@ -326,7 +325,7 @@ def main():
     while True:
         pose = baxter.get_pose_from_space()
 
-        if not pose_stamped.is_empty
+        if not pose.is_empty():
             joint_configuration = baxter.inverse_kinematic_solver(args.limb,
                                                                   pose.get_pose_stamped())
 
