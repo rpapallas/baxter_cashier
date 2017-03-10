@@ -116,8 +116,8 @@ class Shopkeeper:
         self.left_limb = baxter_interface.Limb("left")
         self.right_limb = baxter_interface.Limb("right")
 
-        self.left_limb.set_joint_position_speed(0.2)
-        self.right_limb.set_joint_position_speed(0.2)
+        self.left_limb.set_joint_position_speed(0.1)
+        self.right_limb.set_joint_position_speed(0.1)
 
         # Baxter Grippers configured
         self.left_gripper = Gripper("left", CHECK_VERSION)
@@ -126,14 +126,8 @@ class Shopkeeper:
         self.left_gripper.calibrate()
         self.right_gripper.calibrate()
 
-        # This is a static (relative) pose of Baxter's head camera.
-        self.relative_head_camera_pose = CashierPose(0.57354,    # Trans X
-                                                     -0.021107,  # Trans Y
-                                                     0.74713,    # Trans Z
-                                                     -0.02182,   # Rotation X
-                                                     -0.55414,   # Rotation Y
-                                                     0.77549,    # Rotation Z
-                                                     -0.30178)   # Rotation W
+        self.pose_to_head_camera_left_hand = CashierPose(0.42974, 0.1787, 0.74217, 0.49304, -0.52719, 0.47738, 0.50108)
+        self.pose_to_head_camera_right_hand = CashierPose(0.41502, -0.15434, 0.71501, -0.49805, 0.49115, 0.48121, 0.52835)
 
     def get_limb_for_side(self, side):
         return self.left_limb if side == "left" else self.right_limb
@@ -168,13 +162,19 @@ class Shopkeeper:
         time.sleep(1)
 
         # Calculate the IK to move the hand to Baxter's head camera
-        pose_stamped = self.relative_head_camera_pose.get_pose_stamped()
+        if limb_side == "left":
+            pose_stamped = self.pose_to_head_camera_left_hand.get_pose_stamped()
+        else:
+            pose_stamped = self.pose_to_head_camera_right_hand.get_pose_stamped()
+
         joints_to_move_to_head = self.inverse_kinematic_solver(limb_side,
                                                                pose_stamped)
 
         if joints_to_move_to_head is not None:
             limb.move_to_joint_positions(joints_to_move_to_head)
             recognised_banknote = None #get_banknote_value()
+
+            time.sleep(5)
 
             if recognised_banknote is not None:
                 print "Received: " + recognised_banknote
@@ -321,6 +321,8 @@ def main():
 
     baxter = Shopkeeper()
     baxter.get_list_of_users()
+
+    flag = False
 
     while True:
         pose = baxter.get_pose_from_space()
