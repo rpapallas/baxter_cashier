@@ -340,27 +340,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-
-
-
-# Valid Joint Solution Found
-# {'left_w0': 2.106294876484381, 'left_w1': -1.1005751521035783, 'left_w2': 1.4644689203366548, 'left_e0': -1.6411138752279184, 'left_e1': 2.2642346774524866, 'left_s0': -0.1384362423002121, 'left_s1': 0.6967474257859355}
-# I came here
-# Moving limb to neutral position...
-# Limb's neutral position set.
-#
-# Exiting example...
-# [baxter - http://10.0.0.101:11311] rafael@csros03:~/ros_ws$ rosrun baxter_cashier_manipulation motion_planning.py -l left
-# Initializing node...
-# Getting robot state...
-# Enabling robot...
-# [INFO] [WallTime: 1488902771.318287] Robot Enabled
-# Moving limb to neutral position...
-# Limb's neutral position set.
-# 0.422272155762 0.0783126983643 0.708687805176 0.0 0.0 0.0 1.0
-# Valid Joint Solution Found
-# {'left_w0': 1.8141469376672572, 'left_w1': -1.47079632679, 'left_w2': 1.6268416838401842, 'left_e0': -1.4891417570892072, 'left_e1': 2.2596985265257055, 'left_s0': -0.1514685648331161, 'left_s1': 0.254126947499098}
-# I came here
-# Moving limb to neutral position...
-# Limb's neutral position set.
