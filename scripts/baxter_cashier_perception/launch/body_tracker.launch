@@ -1,0 +1,9 @@
+<launch>
+    <!-- This run the body_tracker_listener script implemented in this project. And receives data from
+        the Skeleton Tracker -->
+    <node pkg="baxter_cashier_perception"
+               name="body_tracker_listener"
+               type="body_tracker_listener.py"
+               output="screen">
+    </node>
+</launch>

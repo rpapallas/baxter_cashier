@@ -1,0 +1,3 @@
+string camera_topic
+---
+int8 banknote_amount
