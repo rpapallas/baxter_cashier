@@ -65,6 +65,7 @@ class CashierPose:
         self.rotation_y = y2
         self.rotation_z = z3
         self.rotation_w = w
+
     def __str__(self):
         return "{} {} {} {} {} {} {}".format(self.transformation_x,
                                              self.transformation_y,
@@ -73,6 +74,7 @@ class CashierPose:
                                              self.rotation_y,
                                              self.rotation_z,
                                              self.rotation_w)
+
     def _get_position_and_orientation(self):
         position = Point(self.transformation_x,
                          self.transformation_y,
@@ -106,6 +108,34 @@ class CashierPose:
         return all(map(lambda v: v == 0, value))
 
 
+class BaxterArm():
+    def __init__(self, side_name):
+        # The string side_name is used for representation purposes (ie __str__)
+        self._side_name = side_name
+
+        # Initialise the limb and gripper of the arm
+        self.limb = baxter_interface.Limb(side_name)
+        self.gripper = Gripper(side_name, CHECK_VERSION)
+
+        # Set the speed of the arm
+        self.limb.set_joint_position_speed(0.1)
+
+        # Calibrate the gripper
+        self.gripper.calibrate()
+
+    def __str__(self):
+        """ String representation of the arm, either 'left' or 'right' string
+        will be returned. Useful when the string representation of the arm
+        is needed, like when accessing the IK solver."""
+        return self._side_name
+
+    def is_left(self):
+        return True if self._side_name == "left" else False
+
+    def is_right(self):
+        return True if self._side_name == "right" else False
+
+
 class Shopkeeper:
     def __init__(self):
         # This is the camera topic to be used for money recognition (Baxter's
@@ -113,74 +143,75 @@ class Shopkeeper:
         self._money_recognition_camera_topic = "/camera/rgb/image_rect_color"
 
         # Baxter's libms configured
-        self.left_limb = baxter_interface.Limb("left")
-        self.right_limb = baxter_interface.Limb("right")
+        self.left_arm = BaxterArm("left")
+        self.right_arm = BaxterArm("right")
 
-        self.left_limb.set_joint_position_speed(0.1)
-        self.right_limb.set_joint_position_speed(0.1)
+        # The static poses to move arm to Baxter's head camera, ideally to
+        # use the head camera for money recognition.
+        self.pose_to_head_camera_left_hand = CashierPose(0.42974, 0.1787,
+                                                         0.74217, 0.49304,
+                                                         -0.52719, 0.47738,
+                                                         0.50108)
 
-        # Baxter Grippers configured
-        self.left_gripper = Gripper("left", CHECK_VERSION)
-        self.right_gripper = Gripper("right", CHECK_VERSION)
+        self.pose_to_head_camera_right_hand = CashierPose(0.41502, -0.15434,
+                                                          0.71501, -0.49805,
+                                                          0.49115, 0.48121,
+                                                          0.52835)
 
-        self.left_gripper.calibrate()
-        self.right_gripper.calibrate()
+        # TODO: Make this zero, is just for testing purposes set to 3
+        self.amount_due = 3
 
-        self.pose_to_head_camera_left_hand = CashierPose(0.42974, 0.1787, 0.74217, 0.49304, -0.52719, 0.47738, 0.50108)
-        self.pose_to_head_camera_right_hand = CashierPose(0.41502, -0.15434, 0.71501, -0.49805, 0.49115, 0.48121, 0.52835)
+    def interaction(self):
+        """
+        Handles the main logic of detecting the entrance of new customer, and
+        determining if the next action is to get or give money.
+        """
+        while self.amount_due != 0:
+            left_pose, right_pose = self.get_pose_from_space()
 
-    def get_limb_for_side(self, side):
-        return self.left_limb if side == "left" else self.right_limb
+            if not pose.is_empty():
+                baxter_arm, joint_config = self.ik_solver(left_pose.get_pose_stamped())
 
-    def get_gripper_for_side(self, side):
-        return self.left_gripper if side == "left" else self.right_gripper
+                # If the left hand can't reach the pose, try with the right hand
+                if baxter_arm is None:
+                    baxter_arm, joint_config = self.ik_solver(right_pose.get_pose_stamped())
 
-    def move_limb_to_position(self, limb_side, joint_configurations, is_get):
-        '''
-        Given the limb to be moved as well as the joint configurations
-        which is a dictionary of key-value pair with key being the name
-        of the joint and value the configuration of that joint, this
-        function will configure all the joints to the given
-        configuration
-        '''
+                if baxter_arm is not None:
+                    if self.amount_due < 0:  # Baxter owns money
+                        self.give_money_to_customer(baxter_arm, joint_config)
+                    else:  # Customer owns money
+                        self.take_money_from_customer(baxter_arm, joint_config)
 
-        if is_get:
-            self.take_money_from_customer(limb_side, joint_configurations)
-        else:
-            self.give_money_to_customer(limb_side, joint_configurations)
-
-    def take_money_from_customer(self, limb_side, joints_configurations):
-        limb = self.get_limb_for_side(limb_side)
-        gripper = self.get_gripper_for_side(limb_side)
-
-        limb.move_to_joint_positions(joints_configurations)
+    def take_money_from_customer(self, arm, joints_configurations):
+        arm.limb.move_to_joint_positions(joints_configurations)
 
         # Open/Close the Gripper to catch the money from people's hand
-        gripper.open()
+        arm.gripper.open()
         time.sleep(1)
-        gripper.close()
+
+        arm.gripper.close()
         time.sleep(1)
 
         # Calculate the IK to move the hand to Baxter's head camera
-        if limb_side == "left":
+        if arm.is_left():
             pose_stamped = self.pose_to_head_camera_left_hand.get_pose_stamped()
         else:
             pose_stamped = self.pose_to_head_camera_right_hand.get_pose_stamped()
 
-        joints_to_move_to_head = self.inverse_kinematic_solver(limb_side,
-                                                               pose_stamped)
+        joints_to_move_to_head = self.ik_solver(pose_stamped, arm)
 
         if joints_to_move_to_head is not None:
-            limb.move_to_joint_positions(joints_to_move_to_head)
-            recognised_banknote = None #get_banknote_value()
+            arm.limb.move_to_joint_positions(joints_to_move_to_head)
+            recognised_banknote = self.get_banknote_value()
 
             time.sleep(5)
 
             if recognised_banknote is not None:
                 print "Received: " + recognised_banknote
+                self.amount_due -= int(recognised_banknote)
+                # TODO: Put the banknote to the table
             else:
                 print "Unable to recognise banknote"
-                # TODO: Return note back to the user
         else:
             print "Wasn't able to move limb to head camera"
 
@@ -200,38 +231,39 @@ class Shopkeeper:
 
         return None
 
-    def give_money_to_customer(self, limb_side, joint_configurations):
-        limb = self.get_limb_for_side(limb_side)
-        gripper = self.get_gripper_for_side(limb_side)
+    def give_money_to_customer(self, arm, joint_configurations):
+        if self.amount_due <= -5:
+            money_to_give_back = 5
+            self.take_a_five_banknote()
+        elif self.amount_due >= -4:
+            money_to_give_back = 1
+            self.take_a_one_banknote()
 
-        limb.move_to_joint_positions(joint_configurations)
+        arm.limb.move_to_joint_positions(joint_configurations)
 
         # Waiting user to reach the robot to get the money
         time.sleep(2)
+        arm.gripper.open()
 
-        # TODO: Ensure that human's hand is touching the money note
-        gripper.open()
-        limb.move_to_neutral()
+        self.amount_due += money_to_give_back
 
-    def set_neutral_position_of_limb(self, limb):
+    def set_neutral_position_of_limb(self, arm):
         '''
         Set limb's neutral position.
         '''
         print "Moving limb to neutral position..."
-        limb.move_to_neutral()
+        arm.limb.move_to_neutral()
         print "Limb's neutral position set."
 
-    def inverse_kinematic_solver(self, limb_side, pose_stamped):
+    def ik_solver(self, pose_stamped, arm=self.left_arm):
         '''
         Performs Inverse Kinematic on a given limb and pose.
 
         Given the limb and a target pose, will calculate the joint
         configuration of the limb.
         '''
-        # limb = self.get_limb_for_side(limb_side)
-        # self.set_neutral_position_of_limb(limb)
 
-        ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
+        ns = "ExternalTools/" + str(arm) + "/PositionKinematicsNode/IKService"
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
         ikreq = SolvePositionIKRequest()
 
@@ -249,11 +281,15 @@ class Shopkeeper:
             # Format solution into Limb API-compatible dictionary
             limb_joints = dict(zip(resp.joints[0].name,
                                    resp.joints[0].position))
-            return limb_joints
+            return arm, limb_joints
         else:
-            print "No solution found."
+            if arm.is_left():
+                # If not solution found, try to solve it with the opossite hand
+                self.ik_solver(pose_stamped, self.right_arm)
+            else:
+                print "No solution found."
 
-        return None
+        return None, None
 
     def get_list_of_users(self):
         master = rosgraph.masterapi.Master('/camera_depth_optical_frame')
@@ -271,16 +307,20 @@ class Shopkeeper:
             get_user_pose = rospy.ServiceProxy('get_user_pose', GetUserPose)
 
             # Use the handle as any other normal function
-            response = get_user_pose(user_number=1, body_part='left_hand')
+            left_hand = get_user_pose(user_number=1, body_part='left_hand')
+            right_hand = get_user_pose(user_number=1, body_part='right_hand')
         except rospy.ServiceException, e:
             print "Service call failed: %s" % e
 
-        x1, y1, z1 = response.transformation
-        x2, y2, z2, w = response.rotation
+        x1, y1, z1 = left_hand.transformation
+        x2, y2, z2, w = left_hand.rotation
+        left_hand_pose = CashierPose(x1, y1, z1, x2, y2, z2, w)
 
-        x = CashierPose(x1, y1, z1, x2, y2, z2, w)
-        print x
-        return x
+        x1, y1, z1 = right_hand.transformation
+        x2, y2, z2, w = right_hand.rotation
+        right_hand_pose = CashierPose(x1, y1, z1, x2, y2, z2, w)
+
+        return left_hand_pose, right_hand_pose
 
 
 def init():
@@ -303,42 +343,10 @@ def init():
     rs.enable()
 
 
-def setup_args():
-    arg_fmt = argparse.RawDescriptionHelpFormatter
-    parser = argparse.ArgumentParser(formatter_class=arg_fmt,
-                                     description=main.__doc__)
-    parser.add_argument(
-        '-l', '--limb', choices=['left', 'right'], required=True,
-        help="the limb to test"
-    )
-    return parser.parse_args(rospy.myargv()[1:])
-
-
-def main():
+if __name__ == '__main__':
     init()
-    args = setup_args()
-    found = False
-
     baxter = Shopkeeper()
     baxter.get_list_of_users()
 
-    flag = False
-
     while True:
-        pose = baxter.get_pose_from_space()
-
-        if not pose.is_empty():
-            joint_configuration = baxter.inverse_kinematic_solver(args.limb,
-                                                                  pose.get_pose_stamped())
-
-            if joint_configuration is not None:
-                print joint_configuration
-                found = True
-                baxter.move_limb_to_position(limb_side=args.limb,
-                                             joint_configurations=joint_configuration,
-                                             is_get=True)
-                baxter.set_neutral_position_of_limb(baxter.get_limb_for_side(args.limb))
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+        baxter.interaction()
