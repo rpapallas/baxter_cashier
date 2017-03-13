@@ -140,7 +140,7 @@ class Shopkeeper:
     def __init__(self):
         # This is the camera topic to be used for money recognition (Baxter's
         # head camera or RGB-D camera)
-        self._money_recognition_camera_topic = "/camera/rgb/image_rect_color"
+        self._money_recognition_camera_topic = "/cameras/head_camera/image"
 
         # Baxter's libms configured
         self.left_arm = BaxterArm("left")
@@ -166,10 +166,12 @@ class Shopkeeper:
         Handles the main logic of detecting the entrance of new customer, and
         determining if the next action is to get or give money.
         """
+        self.get_banknote_value()
+        return
         while self.amount_due != 0:
             left_pose, right_pose = self.get_pose_from_space()
 
-            if not pose.is_empty():
+            if not left_pose.is_empty() or not right_pose.is_empty():
                 baxter_arm, joint_config = self.ik_solver(left_pose.get_pose_stamped())
 
                 # If the left hand can't reach the pose, try with the right hand
@@ -198,7 +200,7 @@ class Shopkeeper:
         else:
             pose_stamped = self.pose_to_head_camera_right_hand.get_pose_stamped()
 
-        joints_to_move_to_head = self.ik_solver(pose_stamped, arm)
+        _, joints_to_move_to_head = self.ik_solver(pose_stamped, arm)
 
         if joints_to_move_to_head is not None:
             arm.limb.move_to_joint_positions(joints_to_move_to_head)
@@ -217,15 +219,20 @@ class Shopkeeper:
 
     def get_banknote_value(self):
         # This method blocks until the service 'get_user_pose' is available
-        rospy.wait_for_service('bank_note_recogniser')
+        rospy.wait_for_service('recognise_banknote')
 
         try:
             # Handle for calling the service
-            recognise_banknote = rospy.ServiceProxy('recognise_banknote',
-                                                    RecogniseBanknote)
+            recognise_banknote = rospy.ServiceProxy('recognise_banknote', RecogniseBanknote)
 
             # Use the handle as any other normal function
-            return recognise_banknote(camera_topic=self._money_recognition_camera_topic)
+            value = recognise_banknote(camera_topic=self._money_recognition_camera_topic)
+            if value.banknote_amount != -1:
+                print value.banknote_amount
+            else:
+                print "Nothing detected"
+
+            return value.banknote_amount
         except rospy.ServiceException, e:
             print "Service call failed: %s" % e
 
@@ -255,13 +262,14 @@ class Shopkeeper:
         arm.limb.move_to_neutral()
         print "Limb's neutral position set."
 
-    def ik_solver(self, pose_stamped, arm=self.left_arm):
+    def ik_solver(self, pose_stamped, arm=None):
         '''
         Performs Inverse Kinematic on a given limb and pose.
 
         Given the limb and a target pose, will calculate the joint
         configuration of the limb.
         '''
+        if arm is None: arm = self.left_arm
 
         ns = "ExternalTools/" + str(arm) + "/PositionKinematicsNode/IKService"
         iksvc = rospy.ServiceProxy(ns, SolvePositionIK)
@@ -349,4 +357,5 @@ if __name__ == '__main__':
     baxter.get_list_of_users()
 
     while True:
-        baxter.interaction()
+        baxter.get_banknote_value()
+        # baxter.interaction()
