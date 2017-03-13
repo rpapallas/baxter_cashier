@@ -10,8 +10,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import numpy as np
-from baxter_cashier_manipulation.srv import RecogniseBanknote
-
+from baxter_cashier_manipulation.srv import *
+import time
 
 class BanknoteRecogniser:
     def __init__(self):
@@ -19,16 +19,26 @@ class BanknoteRecogniser:
         self.detected_amount = None
 
     def detect(self, request):
+        def seconds_passed(oldepoch):
+            return time.time() - oldepoch >= 5
+
+        print "Request received: " + str(request.camera_topic)
         self.image_sub = rospy.Subscriber(request.camera_topic,
                                           Image,
                                           self.callback)
 
+        since_time_started = time.time()
+
         while True:
-            if self.detected_amount is not None:
+            if self.detected_amount is not None or seconds_passed(since_time_started):
                 self.image_sub.unregister()
-                response = RecogniseBanknoteResponse(self.detected_amount)
+
+                if self.detected_amount is None:
+                    return RecogniseBanknoteResponse(-1)
+
+                temp = self.detected_amount
                 self.detected_amount = None
-                return response
+                return RecogniseBanknoteResponse(temp)
 
     def callback(self, data):
         try:
@@ -59,9 +69,9 @@ class BanknoteRecogniser:
 
 
 if __name__ == '__main__':
+    print "Starting.."
+    rospy.init_node("bank_note_recogniser", anonymous=True)
     banknote_recogniser = BanknoteRecogniser()
-
-    rospy.init_node('bank_note_recogniser', anonymous=True)
 
     s = rospy.Service('recognise_banknote',
                       RecogniseBanknote,
