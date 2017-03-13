@@ -2,8 +2,8 @@ class MoveItArm():
     def __init__(self, side_name):
         self._side_name = side_name
 
-        self.left_arm = moveit_commander.MoveGroupCommander(side_name)
-        self.gripper = Gripper(side_name.replace("_arm", ""), CHECK_VERSION)
+        self.left_arm = moveit_commander.MoveGroupCommander(side_name + "_arm")
+        self.gripper = moveit_commander.MoveGroupCommander(side_name + "_gripper")
 
         # Calibrate the gripper
         self.gripper.calibrate()
@@ -15,10 +15,10 @@ class MoveItArm():
         return self._side_name
 
     def is_left(self):
-        return True if self._side_name == "left_arm" else False
+        return True if self._side_name == "left" else False
 
     def is_right(self):
-        return True if self._side_name == "right_arm" else False
+        return True if self._side_name == "right" else False
 
 
 
@@ -40,13 +40,14 @@ class MoveitPlanner:
         self.right_arm = MoveItArm("right_arm")
 
         self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
-                                                        moveit_msgs.msg.DisplayTrajectory,
-                                                        queue_size=20)
+                                                            moveit_msgs.msg.DisplayTrajectory,
+                                                            queue_size=20)
         rospy.sleep(10)
+        self.active_hand = None
 
     def is_pose_reachable_by_robot(self, baxter_pose):
-        baxter_arm, solution = self.ik_solver(baxter_pose.get_pose_stamped())
-        return True if solution is not None else False
+        plan = self.move_to_position(baxter_pose)
+        return True if plan is not None else False
 
     def open_gripper(self):
         self.active_hand.gripper.open()
@@ -60,6 +61,19 @@ class MoveitPlanner:
         pass
 
     def move_to_position(self, baxter_pose):
+        if self.is_pose_reachable_by_robot(baxter_pose):
+            plan = self.move_to_position(baxter_pose)
+
+            if plan is not None:
+                self.active_hand.go(wait=True)
+                self.active_hand.clear_pose_targets()
+            else:
+                self.active_hand = None
+
+    def move_to_position(self, baxter_pose, arm=None):
+        if arm is None:
+            arm = self.left_arm
+
         pose_target = geometry_msgs.msg.Pose()
         pose_target.orientation.w = baxter_pose.rotation_w
         pose_target.position.x = baxter_pose.transformation_x
@@ -68,6 +82,12 @@ class MoveitPlanner:
 
         arm.set_pose_target(pose_target)
 
-        plan1 = arm.plan()
-        arm.go(wait=True)
-        arm.clear_pose_targets()
+        plan = arm.plan()
+
+        if plan is None and arm is self.left_arm:
+            return self.move_to_position(baxter_pose, arm=self.right_arm)
+
+        if plan is not None:
+            self.active_hand = arm
+
+        return plan
