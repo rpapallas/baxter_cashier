@@ -3,22 +3,16 @@
     <arg name="user" default="" />
 
     <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="false"/>
-    <node pkg="baxter_tools" type="tuck_arms.py" name="tuck_arms" args="-u"/>
+    <node name="tuck_arms" pkg="baxter_tools" type="tuck_arms.py" args="-u"/>
 
     <!-- =================================================================== -->
     <!--        2. Launch/Run the perception part of the project    -->
     <!-- =================================================================== -->
-
-    <!-- The camera, skeleton tracker and Rviz -->
-    <include file="$(find openni2_launch)/launch/openni2.launch" />
-    <include file="$(find cob_openni2_tracker)/launch/body_tracker_nodelet.launch" />
-    <node pkg="rviz" type="rviz" args="-d rviz_config.vcg" output="screen"/>
-
-    <!-- Camera Calibrator allows to align camera relative to Baxter's position -->
-    <node pkg="baxter_cashier_perception" type="camera_calibration.py" name="camera_robot_calibration"/>
+    <node name="start_rviz" pkg="rviz" type="rviz"  output="screen" args="-d $(find baxter_cashier_perception)/launch/rviz_config.rviz"/>
 
     <!-- Custom service that tracks user's hand pose and return the pose -->
     <node pkg="baxter_cashier_perception" type="body_tracker_listener.py" name="body_tracker_service"/>
+    <node pkg="baxter_cashier_perception" type="banknote_recogniser.py" name="banknote_recogniser"/>
 
     <!-- =================================================================== -->
     <!--        3. Launch/Run the manipulation part of the project    -->
