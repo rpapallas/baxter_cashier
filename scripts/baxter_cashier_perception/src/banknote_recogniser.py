@@ -49,11 +49,11 @@ class BanknoteRecogniser:
         img = cv_image
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        lower_range_red = np.array([101, 100, 100])
-        upper_range_red = np.array([400, 255, 255])
+        lower_range_red = np.array([107, 100, 100])
+        upper_range_red = np.array([127, 255, 255])
 
-        lower_range_orange = np.array([1, 100, 100])
-        upper_range_orange = np.array([101, 255, 255])
+        lower_range_orange = np.array([106, 100, 100])
+        upper_range_orange = np.array([126, 255, 255])
 
         mask_orange = cv2.inRange(hsv, lower_range_orange, upper_range_orange)
         mask_red = cv2.inRange(hsv, lower_range_red, upper_range_red)
