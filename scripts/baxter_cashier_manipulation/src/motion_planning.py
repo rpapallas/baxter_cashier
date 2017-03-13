@@ -148,15 +148,8 @@ class Shopkeeper:
 
         # The static poses to move arm to Baxter's head camera, ideally to
         # use the head camera for money recognition.
-        self.pose_to_head_camera_left_hand = CashierPose(0.42974, 0.1787,
-                                                         0.74217, 0.49304,
-                                                         -0.52719, 0.47738,
-                                                         0.50108)
-
-        self.pose_to_head_camera_right_hand = CashierPose(0.41502, -0.15434,
-                                                          0.71501, -0.49805,
-                                                          0.49115, 0.48121,
-                                                          0.52835)
+        self.pose_to_head_camera_left_hand = {'left_w0': -0.9878836273982065, 'left_w1': 1.252111818111469, 'left_w2': -0.18829614171293454, 'left_e0': -2.2998206962372065, 'left_e1': 2.0068303657510924, 'left_s0': 1.3188399823844845, 'left_s1': -0.7807962210336756}
+        self.pose_to_head_camera_right_hand = {'right_s0': -0.8295001110490375, 'right_s1': -0.38157772098649667, 'right_w0': 0.39346607209260864, 'right_w1': 0.8126263223822979, 'right_w2': 0.5445631796993219, 'right_e0': 2.3899420675254746, 'right_e1': 2.0674226068725665}
 
         # TODO: Make this zero, is just for testing purposes set to 3
         self.amount_due = 3
@@ -166,8 +159,6 @@ class Shopkeeper:
         Handles the main logic of detecting the entrance of new customer, and
         determining if the next action is to get or give money.
         """
-        self.get_banknote_value()
-        return
         while self.amount_due != 0:
             left_pose, right_pose = self.get_pose_from_space()
 
@@ -196,26 +187,23 @@ class Shopkeeper:
 
         # Calculate the IK to move the hand to Baxter's head camera
         if arm.is_left():
-            pose_stamped = self.pose_to_head_camera_left_hand.get_pose_stamped()
+            joints = self.pose_to_head_camera_left_hand
         else:
-            pose_stamped = self.pose_to_head_camera_right_hand.get_pose_stamped()
+            joints = self.pose_to_head_camera_right_hand
 
-        _, joints_to_move_to_head = self.ik_solver(pose_stamped, arm)
+        # _, joints_to_move_to_head = self.ik_solver(pose_stamped, arm)
 
-        if joints_to_move_to_head is not None:
-            arm.limb.move_to_joint_positions(joints_to_move_to_head)
-            recognised_banknote = self.get_banknote_value()
+        arm.limb.set_joint_positions(joints)
+        recognised_banknote = self.get_banknote_value()
 
-            time.sleep(5)
+        time.sleep(5)
 
-            if recognised_banknote is not None:
-                print "Received: " + recognised_banknote
-                self.amount_due -= int(recognised_banknote)
-                # TODO: Put the banknote to the table
-            else:
-                print "Unable to recognise banknote"
+        if recognised_banknote is not None:
+            print "Received: " + str(recognised_banknote)
+            self.amount_due -= int(recognised_banknote)
+            # TODO: Put the banknote to the table
         else:
-            print "Wasn't able to move limb to head camera"
+            print "Unable to recognise banknote"
 
     def get_banknote_value(self):
         # This method blocks until the service 'get_user_pose' is available
@@ -357,5 +345,5 @@ if __name__ == '__main__':
     baxter.get_list_of_users()
 
     while True:
-        baxter.get_banknote_value()
-        # baxter.interaction()
+        # baxter.get_banknote_value()
+        baxter.interaction()
