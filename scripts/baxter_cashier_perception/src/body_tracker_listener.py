@@ -88,7 +88,7 @@ class BodyTrackerListener:
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
-        source = '/torso'
+        source = '/base'
         target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
 
         timeout_start = time.time()
