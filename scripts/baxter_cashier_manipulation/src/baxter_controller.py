@@ -11,6 +11,7 @@ from baxter_core_msgs.srv import (
     SolvePositionIKRequest,
 )
 
+
 class BaxterArm():
     def __init__(self, side_name):
         # The string side_name is used for representation purposes (ie __str__)
@@ -27,9 +28,11 @@ class BaxterArm():
         self.gripper.calibrate()
 
     def __str__(self):
-        """ String representation of the arm, either 'left' or 'right' string
+        """
+        String representation of the arm, either 'left' or 'right' string
         will be returned. Useful when the string representation of the arm
-        is needed, like when accessing the IK solver."""
+        is needed, like when accessing the IK solver.
+        """
         return self._side_name
 
     def is_left(self):
@@ -59,10 +62,25 @@ class BaxterPlanner:
         time.sleep(1)
 
     def move_hand_to_head_camera(self):
-        left_hand = {'left_w0': 2.64343239272, 'left_w1': -0.846373899716, 'left_w2': -2.14527213186, 'left_e0': -2.40988381777, 'left_e1': 2.12494688642, 'left_s0': 0.956820516444, 'left_s1': -0.369305874683}
-        right_hand = {'right_s0': -0.852509822867, 'right_s1': -0.521936963078, 'right_w0': 0.557218521199, 'right_w1': 0.93572828061, 'right_w2': -0.926524395883, 'right_e0': 2.33395176877, 'right_e1': 1.99149055787}
+        left_hand = {'left_w0': 2.64343239272,
+                     'left_w1': -0.846373899716,
+                     'left_w2': -2.14527213186,
+                     'left_e0': -2.40988381777,
+                     'left_e1': 2.12494688642,
+                     'left_s0': 0.956820516444,
+                     'left_s1': -0.369305874683}
 
-        self.active_hand.limb.move_to_joint_positions(left_hand)
+        right_hand = {'right_s0': -0.852509822867,
+                      'right_s1': -0.521936963078,
+                      'right_w0': 0.557218521199,
+                      'right_w1': 0.93572828061,
+                      'right_w2': -0.926524395883,
+                      'right_e0': 2.33395176877,
+                      'right_e1': 1.99149055787}
+
+        config = left_hand if self.active_hand is self.left_arm else right_hand
+
+        self.active_hand.limb.move_to_joint_positions(config)
 
     def move_to_position(self, baxter_pose):
         baxter_arm, solution = self.ik_solver(baxter_pose.get_pose_stamped())
@@ -74,20 +92,18 @@ class BaxterPlanner:
             self.active_hand = None
 
     def set_neutral_position_of_limb(self, arm):
-        '''
+        """
         Set limb's neutral position.
-        '''
-        print "Moving limb to neutral position..."
+        """
         arm.limb.move_to_neutral()
-        print "Limb's neutral position set."
 
     def ik_solver(self, pose_stamped, arm=None):
-        '''
+        """
         Performs Inverse Kinematic on a given limb and pose.
 
         Given the limb and a target pose, will calculate the joint
         configuration of the limb.
-        '''
+        """
         if arm is None:
             arm = self.left_arm
 
