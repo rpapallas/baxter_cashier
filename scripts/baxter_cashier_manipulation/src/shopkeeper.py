@@ -69,7 +69,7 @@ class Shopkeeper:
         self._money_recognition_camera_topic = "/cameras/head_camera/image"
 
         # Baxter's libms configured
-        self.planner = planner_factory(planner="baxter")
+        self.planner = planner_factory(planner="moveit")
 
         # TODO: Make this zero, is just for testing purposes set to 3
         self.amount_due = 3
