@@ -53,7 +53,7 @@ class MoveItPlanner:
         self.active_hand = None
 
         self.scene = moveit_commander.PlanningSceneInterface()
-        rospy.sleep(2)
+        # rospy.sleep(2)
         self._create_scene()
 
         #We create this DisplayTrajectory publisher which is used below to publish trajectories for RVIZ to visualize.
@@ -72,8 +72,17 @@ class MoveItPlanner:
             obstacle.set_frame_id(self.robot.get_planning_frame())
             self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
 
-    def is_pose_reachable_by_robot(self, baxter_pose):
-        pass
+    def is_pose_reachable_by_robot(self, baxter_pose, arm=None):
+        if arm is None:
+            arm = self.left_arm
+
+        arm.limb.set_pose_target(baxter_pose.get_pose())
+        plan = self.right_arm.limb.plan()
+
+        if plan.joint_trajectory.points == [] and arm is self.left_arm:
+            self.is_pose_reachable_by_robot(baxter_pose, arm=self.right_arm)
+
+        return False if plan.joint_trajectory.points == [] else True
 
     def open_gripper(self):
         pass
@@ -84,19 +93,27 @@ class MoveItPlanner:
     def move_hand_to_head_camera(self):
         pass
 
-    def move_to_position(self, baxter_pose):
-        self.right_arm.limb.set_pose_target(baxter_pose.get_pose())
-        # self.left_arm.limb.set_planner_id("RRTConnectkConfigDefault")
-        plan_1eft = self.right_arm.limb.plan()
-        self.right_arm.limb.go(wait=True)
-        # moveit_commander.os._exit(0)
+    def move_to_position(self, baxter_pose, arm=None):
+        if arm is None:
+            arm = self.left_arm
+
+        arm.limb.set_pose_target(baxter_pose.get_pose())
+        arm.limb.set_planner_id("RRTConnectkConfigDefault")
+        plan = arm.limb.plan()
+
+        if plan.joint_trajectory.points == [] and arm is self.left_arm:
+            self.move_to_position(baxter_pose, arm=self.right_arm)
+
+        arm.limb.go(wait=True)
 
     def  set_neutral_position_of_limb(self, arm):
         pass
+
 
 if __name__ == '__main__':
     rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
     planner = MoveItPlanner()
 
     pose = BaxterPose(0.72651, -0.041037, 0.19097, 0.56508, -0.5198, -0.54332, -0.33955)
-    planner.move_to_position(pose)
+    print planner.is_pose_reachable_by_robot(pose)
+    moveit_commander.os._exit(0)

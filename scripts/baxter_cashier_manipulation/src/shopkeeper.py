@@ -48,11 +48,11 @@ from baxter_cashier_manipulation.srv import GetUserPose
 from baxter_cashier_manipulation.srv import RecogniseBanknote
 from baxter_pose import BaxterPose
 from baxter_controller import BaxterPlanner
-from moveit_controller import MoveitPlanner
+from moveit_controller import MoveItPlanner
 
 
 def planner_factory(planner="baxter"):
-    planners = dict(baxter=BaxterPlanner, moveit=MoveitPlanner)
+    planners = dict(baxter=BaxterPlanner, moveit=MoveItPlanner)
     return planners[planner]()
 
 
@@ -86,6 +86,9 @@ class Shopkeeper:
             left_pose, right_pose = self.get_pose_from_space()
             is_reachable = False
             pose = None
+
+            print left_pose
+            print right_pose
 
             # If the left pose is not empty (i.e a user is there)
             if not left_pose.is_empty():
@@ -122,7 +125,7 @@ class Shopkeeper:
         # Moves Baxter hand to head
         self.planner.move_hand_to_head_camera()
 
-        recognised_banknote = self.get_banknote_value()
+        recognised_banknote = -1 #self.get_banknote_value()
 
         if recognised_banknote != -1:
             print "Received: " + str(recognised_banknote)
