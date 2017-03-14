@@ -15,95 +15,88 @@ from shape_msgs.msg import SolidPrimitive, Plane, Mesh, MeshTriangle
 from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
 from std_msgs.msg import Header
 
+from environment_factory import EnvironmentFactory
+from baxter_pose import BaxterPose
+
+class MoveItArm:
+    def __init__(self, side_name):
+        self._side_name = side_name
+        self.limb = MoveGroupCommander("{}_arm".format(side_name))
+
+        self.limb.set_goal_position_tolerance(0.01)
+        self.limb.set_goal_orientation_tolerance(0.01)
+
+        self.gripper = None
+
+        # TODO: Calibrate gripper
+
+    def __str__(self):
+        """ String representation of the arm, either 'left' or 'right' string
+        will be returned. Useful when the string representation of the arm
+        is needed, like when accessing the IK solver."""
+        return self._side_name
+
+    def is_left(self):
+        return True if self._side_name == "left" else False
+
+    def is_right(self):
+        return True if self._side_name == "right" else False
+
+
+class MoveItPlanner:
+    def __init__(self):
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+
+        self.left_arm = MoveItArm("left")
+        self.right_arm = MoveItArm("right")
+        self.active_hand = None
+
+        self.scene = moveit_commander.PlanningSceneInterface()
+        rospy.sleep(2)
+        self._create_scene()
+
+        #We create this DisplayTrajectory publisher which is used below to publish trajectories for RVIZ to visualize.
+        display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=30)
+        # moveit_commander.os._exit(0)
+
+    def _create_scene(self):
+        # Initialise the Factory of Environments
+        EnvironmentFactory.initialize()
+
+        # Get University of Leeds (Robotic's Lab) environment with the obstacles of it.
+        environment = EnvironmentFactory.get_robotics_lab_environment()
+
+        # For each obstacle in the environment added to the scene
+        for obstacle in environment.get_obstacles():
+            obstacle.set_frame_id(self.robot.get_planning_frame())
+            self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
+
+    def is_pose_reachable_by_robot(self, baxter_pose):
+        pass
+
+    def open_gripper(self):
+        pass
+
+    def close_gripper(self):
+        pass
+
+    def move_hand_to_head_camera(self):
+        pass
+
+    def move_to_position(self, baxter_pose):
+        self.right_arm.limb.set_pose_target(baxter_pose.get_pose())
+        # self.left_arm.limb.set_planner_id("RRTConnectkConfigDefault")
+        plan_1eft = self.right_arm.limb.plan()
+        self.right_arm.limb.go(wait=True)
+        # moveit_commander.os._exit(0)
+
+    def  set_neutral_position_of_limb(self, arm):
+        pass
+
 if __name__ == '__main__':
-    #First initialize moveit_commander and rospy.
-    print "============ Starting tutorial setup"
-    moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('move_group_python_interface_tutorial',anonymous=True)
+    rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
+    planner = MoveItPlanner()
 
-    #Instantiate a RobotCommander object. This object is an interface to the robot as a whole.
-    robot = moveit_commander.RobotCommander()
-
-    #Wait for RVIZ to initialize. This sleep is ONLY to allow Rviz to come up.
-    print "============ Waiting for RVIZ..."
-    rospy.sleep(2)
-
-    print "============ Starting tutorial "
-
-    scene = moveit_commander.PlanningSceneInterface()
-
-    rospy.sleep(2)
-
-    p = PoseStamped()
-    p.header.frame_id = robot.get_planning_frame()
-    p.pose.position.x = 0.8
-    p.pose.position.y = 0
-    p.pose.position.z = -0.54
-    scene.add_box("table", p, (1, 1.5, 0.8))
-
-    p2 = PoseStamped()
-    p2.header.frame_id = robot.get_planning_frame()
-    p2.pose.position.x = 0.80
-    p2.pose.position.y = 0
-    p2.pose.position.z = -0.40
-    scene.add_box("table_obj", p2, (0.5, 0.2, 0.8))
-
-    #Instantiate a MoveGroupCommander object. This object is an interface to one group of joints. In this case the group is the joints in the left arm. This interface can be used to plan and execute motions on the left arm.
-    group_both_arms = MoveGroupCommander("both_arms")
-    group_both_arms.set_goal_position_tolerance(0.01)
-    group_both_arms.set_goal_orientation_tolerance(0.01)
-
-    group_left_arm = MoveGroupCommander("left_arm")
-    group_left_arm.set_goal_position_tolerance(0.01)
-    group_left_arm.set_goal_orientation_tolerance(0.01)
-
-    group_right_arm = MoveGroupCommander("right_arm")
-    group_right_arm.set_goal_position_tolerance(0.01)
-    group_right_arm.set_goal_orientation_tolerance(0.01)
-#
-    #We create this DisplayTrajectory publisher which is used below to publish trajectories for RVIZ to visualize.
-    display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory)
-
-    #Call the planner to compute the plan and visualize it if successful.
-    print "============ Generating plan for left arm"
-    pose_target_left = geometry_msgs.msg.Pose()
-    pose_target_left.orientation.x = 0.73567
-    pose_target_left.orientation.y = -0.17577
-    pose_target_left.orientation.z = 0.22726
-    pose_target_left.orientation.w = 0.67253
-    pose_target_left.position.x = 0.81576
-    pose_target_left.position.y = 0.093893
-    pose_target_left.position.z = 0.2496
-    group_left_arm.set_pose_target(pose_target_left)
-
-    #group_left_arm.set_position_target([0.75,0.27,0.35])
-    group_left_arm.set_planner_id("RRTConnectkConfigDefault")
-    plan_1eft = group_left_arm.plan()
-    #print "Trajectory time (nsec): ", plan_left.joint_trajectory.points[len(plan_left.joint_trajectory.points)-1].time_from_start
-
-    rospy.sleep(5)
-    print "============ Generating plan for right arm"
-    pose_target_right = geometry_msgs.msg.Pose()
-    pose_target_right.orientation.x = 0.56508
-    pose_target_right.orientation.y = -0.5198
-    pose_target_right.orientation.z = -0.54332
-    pose_target_right.orientation.w = -0.33955
-    pose_target_right.position.x = 0.72651
-    pose_target_right.position.y = -0.041037
-    pose_target_right.position.z = 0.19097
-    group_right_arm.set_pose_target(pose_target_right)
-
-    #group_right_arm.set_position_target([0.75,-0.27,0.35])
-    plan_right = group_right_arm.plan()
-    #print "Trajectory time (nsec): ", plan_right.joint_trajectory.points[len(plan_right.joint_trajectory.points)-1].time_from_start
-    rospy.sleep(5)
-
-
-    print "============ Generating plan for both arms"
-    #group_both_arms.set_pose_target(pose_target_right, pose_target_left)
-    group_both_arms.set_pose_target(pose_target_right, 'right_gripper')
-    group_both_arms.set_pose_target(pose_target_left, 'left_gripper')
-
-    plan_both = group_both_arms.plan()
-    print "Trajectory time (nsec): " + str(plan_both.joint_trajectory.points[len(plan_both.joint_trajectory.points)-1].time_from_start)
-    moveit_commander.os._exit(0)
+    pose = BaxterPose(0.72651, -0.041037, 0.19097, 0.56508, -0.5198, -0.54332, -0.33955)
+    planner.move_to_position(pose)
