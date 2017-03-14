@@ -1,4 +1,12 @@
-import geometry_msgs.msg
+from geometry_msgs.msg import (
+    PoseStamped,
+    Pose,
+    Point,
+    Quaternion,
+)
+
+from std_msgs.msg import Header
+import rospy
 
 
 class BaxterPose:

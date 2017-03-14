@@ -1,4 +1,15 @@
 import time
+import rospy
+
+# Baxter specific imports
+import baxter_interface
+from baxter_interface import Gripper
+
+from baxter_interface import CHECK_VERSION
+from baxter_core_msgs.srv import (
+    SolvePositionIK,
+    SolvePositionIKRequest,
+)
 
 class BaxterArm():
     def __init__(self, side_name):
@@ -48,14 +59,17 @@ class BaxterPlanner:
         time.sleep(1)
 
     def move_hand_to_head_camera(self):
-        pass
+        left_hand = {'left_w0': 2.64343239272, 'left_w1': -0.846373899716, 'left_w2': -2.14527213186, 'left_e0': -2.40988381777, 'left_e1': 2.12494688642, 'left_s0': 0.956820516444, 'left_s1': -0.369305874683}
+        right_hand = {'right_s0': -0.852509822867, 'right_s1': -0.521936963078, 'right_w0': 0.557218521199, 'right_w1': 0.93572828061, 'right_w2': -0.926524395883, 'right_e0': 2.33395176877, 'right_e1': 1.99149055787}
+
+        self.active_hand.limb.move_to_joint_positions(left_hand)
 
     def move_to_position(self, baxter_pose):
         baxter_arm, solution = self.ik_solver(baxter_pose.get_pose_stamped())
 
         if solution is not None:
-            arm.move_to_joint_positions(baxter_arm)
-            self.active_hand = arm
+            baxter_arm.limb.move_to_joint_positions(solution)
+            self.active_hand = baxter_arm
         else:
             self.active_hand = None
 
