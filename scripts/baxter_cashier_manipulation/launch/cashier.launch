@@ -19,5 +19,5 @@
     <!-- =================================================================== -->
 
     <!-- Run the main script for the Baxter Cashier -->
-    <node pkg="baxter_cashier_manipulation" type="motion_planning.py" name="baxter_cashier" output="screen"/>
+    <node pkg="baxter_cashier_manipulation" type="shopkeeper.py" name="shopkeeper" output="screen"/>
 </launch>
