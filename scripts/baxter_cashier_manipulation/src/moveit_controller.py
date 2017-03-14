@@ -1,93 +1,109 @@
-class MoveItArm():
-    def __init__(self, side_name):
-        self._side_name = side_name
+#!/usr/bin/env python
+import sys
+import copy
+import rospy
+import geometry_msgs.msg
 
-        self.left_arm = moveit_commander.MoveGroupCommander(side_name + "_arm")
-        self.gripper = moveit_commander.MoveGroupCommander(side_name + "_gripper")
+from std_msgs.msg import (Header, String)
+from geometry_msgs.msg import (PoseStamped, Pose, Point, Quaternion)
 
-        # Calibrate the gripper
-        self.gripper.calibrate()
+import moveit_commander
+import moveit_msgs.msg
 
-    def __str__(self):
-        """ String representation of the arm, either 'left' or 'right' string
-        will be returned. Useful when the string representation of the arm
-        is needed, like when accessing the IK solver."""
-        return self._side_name
+from moveit_commander import MoveGroupCommander
+from shape_msgs.msg import SolidPrimitive, Plane, Mesh, MeshTriangle
+from moveit_msgs.msg import CollisionObject, AttachedCollisionObject
+from std_msgs.msg import Header
 
-    def is_left(self):
-        return True if self._side_name == "left" else False
+if __name__ == '__main__':
+    #First initialize moveit_commander and rospy.
+    print "============ Starting tutorial setup"
+    moveit_commander.roscpp_initialize(sys.argv)
+    rospy.init_node('move_group_python_interface_tutorial',anonymous=True)
 
-    def is_right(self):
-        return True if self._side_name == "right" else False
+    #Instantiate a RobotCommander object. This object is an interface to the robot as a whole.
+    robot = moveit_commander.RobotCommander()
+
+    #Wait for RVIZ to initialize. This sleep is ONLY to allow Rviz to come up.
+    print "============ Waiting for RVIZ..."
+    rospy.sleep(2)
+
+    print "============ Starting tutorial "
+
+    scene = moveit_commander.PlanningSceneInterface()
+
+    rospy.sleep(2)
+
+    p = PoseStamped()
+    p.header.frame_id = robot.get_planning_frame()
+    p.pose.position.x = 0.8
+    p.pose.position.y = 0
+    p.pose.position.z = -0.54
+    scene.add_box("table", p, (1, 1.5, 0.8))
+
+    p2 = PoseStamped()
+    p2.header.frame_id = robot.get_planning_frame()
+    p2.pose.position.x = 0.80
+    p2.pose.position.y = 0
+    p2.pose.position.z = -0.40
+    scene.add_box("table_obj", p2, (0.5, 0.2, 0.8))
+
+    #Instantiate a MoveGroupCommander object. This object is an interface to one group of joints. In this case the group is the joints in the left arm. This interface can be used to plan and execute motions on the left arm.
+    group_both_arms = MoveGroupCommander("both_arms")
+    group_both_arms.set_goal_position_tolerance(0.01)
+    group_both_arms.set_goal_orientation_tolerance(0.01)
+
+    group_left_arm = MoveGroupCommander("left_arm")
+    group_left_arm.set_goal_position_tolerance(0.01)
+    group_left_arm.set_goal_orientation_tolerance(0.01)
+
+    group_right_arm = MoveGroupCommander("right_arm")
+    group_right_arm.set_goal_position_tolerance(0.01)
+    group_right_arm.set_goal_orientation_tolerance(0.01)
+#
+    #We create this DisplayTrajectory publisher which is used below to publish trajectories for RVIZ to visualize.
+    display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory)
+
+    #Call the planner to compute the plan and visualize it if successful.
+    print "============ Generating plan for left arm"
+    pose_target_left = geometry_msgs.msg.Pose()
+    pose_target_left.orientation.x = 0.73567
+    pose_target_left.orientation.y = -0.17577
+    pose_target_left.orientation.z = 0.22726
+    pose_target_left.orientation.w = 0.67253
+    pose_target_left.position.x = 0.81576
+    pose_target_left.position.y = 0.093893
+    pose_target_left.position.z = 0.2496
+    group_left_arm.set_pose_target(pose_target_left)
+
+    #group_left_arm.set_position_target([0.75,0.27,0.35])
+    group_left_arm.set_planner_id("RRTConnectkConfigDefault")
+    plan_1eft = group_left_arm.plan()
+    #print "Trajectory time (nsec): ", plan_left.joint_trajectory.points[len(plan_left.joint_trajectory.points)-1].time_from_start
+
+    rospy.sleep(5)
+    print "============ Generating plan for right arm"
+    pose_target_right = geometry_msgs.msg.Pose()
+    pose_target_right.orientation.x = 0.56508
+    pose_target_right.orientation.y = -0.5198
+    pose_target_right.orientation.z = -0.54332
+    pose_target_right.orientation.w = -0.33955
+    pose_target_right.position.x = 0.72651
+    pose_target_right.position.y = -0.041037
+    pose_target_right.position.z = 0.19097
+    group_right_arm.set_pose_target(pose_target_right)
+
+    #group_right_arm.set_position_target([0.75,-0.27,0.35])
+    plan_right = group_right_arm.plan()
+    #print "Trajectory time (nsec): ", plan_right.joint_trajectory.points[len(plan_right.joint_trajectory.points)-1].time_from_start
+    rospy.sleep(5)
 
 
+    print "============ Generating plan for both arms"
+    #group_both_arms.set_pose_target(pose_target_right, pose_target_left)
+    group_both_arms.set_pose_target(pose_target_right, 'right_gripper')
+    group_both_arms.set_pose_target(pose_target_left, 'left_gripper')
 
-
-class MoveitPlanner:
-    def __init__(self):
-        self.moveit_commander.roscpp_initialize()
-
-        # This object is an interface to the robot as a whole.
-        self.robot = moveit_commander.RobotCommander()
-
-        # This object is an interface to the world surrounding the robot.
-        self.scene = moveit_commander.PlanningSceneInterface()
-
-        # This object is an interface to one group of joints. In this case the
-        # group is the joints in the left arm. This interface can be used to
-        # plan and execute motions on the left arm.
-        self.left_arm = MoveItArm("left_arm")
-        self.right_arm = MoveItArm("right_arm")
-
-        self.display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
-                                                            moveit_msgs.msg.DisplayTrajectory,
-                                                            queue_size=20)
-        rospy.sleep(10)
-        self.active_hand = None
-
-    def is_pose_reachable_by_robot(self, baxter_pose):
-        plan = self.move_to_position(baxter_pose)
-        return True if plan is not None else False
-
-    def open_gripper(self):
-        self.active_hand.gripper.open()
-        time.sleep(1)
-
-    def close_gripper(self):
-        self.active_hand.gripper.close()
-        time.sleep(1)
-
-    def move_hand_to_head_camera(self):
-        pass
-
-    def move_to_position(self, baxter_pose):
-        if self.is_pose_reachable_by_robot(baxter_pose):
-            plan = self.move_to_position(baxter_pose)
-
-            if plan is not None:
-                self.active_hand.go(wait=True)
-                self.active_hand.clear_pose_targets()
-            else:
-                self.active_hand = None
-
-    def move_to_position(self, baxter_pose, arm=None):
-        if arm is None:
-            arm = self.left_arm
-
-        pose_target = geometry_msgs.msg.Pose()
-        pose_target.orientation.w = baxter_pose.rotation_w
-        pose_target.position.x = baxter_pose.transformation_x
-        pose_target.position.y = baxter_pose.transformation_y
-        pose_target.position.z = baxter_pose.transformation_z
-
-        arm.set_pose_target(pose_target)
-
-        plan = arm.plan()
-
-        if plan is None and arm is self.left_arm:
-            return self.move_to_position(baxter_pose, arm=self.right_arm)
-
-        if plan is not None:
-            self.active_hand = arm
-
-        return plan
+    plan_both = group_both_arms.plan()
+    print "Trajectory time (nsec): " + str(plan_both.joint_trajectory.points[len(plan_both.joint_trajectory.points)-1].time_from_start)
+    moveit_commander.os._exit(0)
