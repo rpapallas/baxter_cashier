@@ -27,15 +27,8 @@ import argparse
 import sys
 import time
 
-# Baxter specific imports
 import baxter_interface
-from baxter_interface import Gripper
-
 from baxter_interface import CHECK_VERSION
-from baxter_core_msgs.srv import (
-    SolvePositionIK,
-    SolvePositionIKRequest,
-)
 
 # ROS specific imports
 import rospy
@@ -92,39 +85,46 @@ class Shopkeeper:
             # Get the hand pose of customer's two hands.
             left_pose, right_pose = self.get_pose_from_space()
             is_reachable = False
+            pose = None
 
             # If the left pose is not empty (i.e a user is there)
             if not left_pose.is_empty():
                 # Verify that Baxter can move there
-                is_reachable = self.planner.is_pose_reachable_by_robot(left_pose.get_pose_stamped())
+                is_reachable = self.planner.is_pose_reachable_by_robot(left_pose)
+
+                if is_reachable:
+                    pose = left_pose
 
             # If the right pose is not empty (i.e a user is there) and left hand didn't work
             if not right_pose.is_empty() and not is_reachable:
                 # Verify that Baxter can move there
-                is_reachable = self.planner.is_pose_reachable_by_robot(right_pose.get_pose_stamped())
+                is_reachable = self.planner.is_pose_reachable_by_robot(right_pose)
+
+                if is_reachable:
+                    pose = right_pose
 
             # If we found a reachable pose
             if is_reachable:
                 if self.amount_due < 0:  # Baxter owns money
-                    self.give_money_to_customer(baxter_arm, joint_config)
+                    self.give_money_to_customer(pose)
                 else:  # Customer owns money
-                    self.take_money_from_customer(baxter_arm, joint_config)
+                    self.take_money_from_customer(pose)
             else:
                 print "Wasn't able to move hand to goal position"
 
-    def take_money_from_customer(self, joints_configurations):
-        self.planner.move_to_position(joints_configurations)
+    def take_money_from_customer(self, pose):
+        self.planner.move_to_position(pose)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
         self.planner.close_gripper()
 
         # Moves Baxter hand to head
-        if self.planner.move_hand_to_head_camera()
+        self.planner.move_hand_to_head_camera()
 
         recognised_banknote = self.get_banknote_value()
 
-        if recognised_banknote is not None:
+        if recognised_banknote != -1:
             print "Received: " + str(recognised_banknote)
 
             # Since we detected amount, subtract the value from the own amount
@@ -154,7 +154,7 @@ class Shopkeeper:
 
         return None
 
-    def give_money_to_customer(self, joints_configurations):
+    def give_money_to_customer(self, pose):
         if self.amount_due <= -5:
             money_to_give_back = 5
             self.take_a_five_banknote()
@@ -162,7 +162,7 @@ class Shopkeeper:
             money_to_give_back = 1
             self.take_a_one_banknote()
 
-        self.planner.move_to_position(joints_configurations)
+        self.planner.move_to_position(pose)
 
         # Waiting user to reach the robot to get the money
         time.sleep(2)
@@ -193,11 +193,11 @@ class Shopkeeper:
 
         x1, y1, z1 = left_hand.transformation
         x2, y2, z2, w = left_hand.rotation
-        left_hand_pose = CashierPose(x1, y1, z1, x2, y2, z2, w)
+        left_hand_pose = BaxterPose(x1, y1, z1, x2, y2, z2, w)
 
         x1, y1, z1 = right_hand.transformation
         x2, y2, z2, w = right_hand.rotation
-        right_hand_pose = CashierPose(x1, y1, z1, x2, y2, z2, w)
+        right_hand_pose = BaxterPose(x1, y1, z1, x2, y2, z2, w)
 
         return left_hand_pose, right_hand_pose
 
