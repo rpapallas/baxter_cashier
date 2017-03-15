@@ -1,19 +1,27 @@
+#!/usr/bin/env python
+"""
+Baxter Controller.
+
+This  controller  bridge  Baxter IK Solver and planner into class to be used in
+other scripts like shopkeeper.py. Note that this is has been replaced by MoveIt
+since MoveIt provides a more flexible planenr.  Is only  here as a legacy code.
+"""
+
 import time
 import rospy
 
 # Baxter specific imports
 import baxter_interface
 from baxter_interface import Gripper
-
 from baxter_interface import CHECK_VERSION
-from baxter_core_msgs.srv import (
-    SolvePositionIK,
-    SolvePositionIKRequest,
-)
+from baxter_core_msgs.srv import (SolvePositionIK, SolvePositionIKRequest)
 
 
 class BaxterArm():
+    """Represents a Baxter Arm."""
+
     def __init__(self, side_name):
+        """Initialise the arm with some useful configuration."""
         # The string side_name is used for representation purposes (ie __str__)
         self._side_name = side_name
 
@@ -29,39 +37,80 @@ class BaxterArm():
 
     def __str__(self):
         """
-        String representation of the arm, either 'left' or 'right' string
-        will be returned. Useful when the string representation of the arm
-        is needed, like when accessing the IK solver.
+        String  representation  of the  arm.
+
+        Either  'left'  or  'right'  string  will be returned. Useful  when the
+        string representation of the arm is needed, like when  accessing the IK
+        solver.
         """
         return self._side_name
 
     def is_left(self):
+        """Will return true if this is the left arm, fale otherwise."""
         return True if self._side_name == "left" else False
 
     def is_right(self):
+        """Will return true if this is the right arm, fale otherwise."""
         return True if self._side_name == "right" else False
 
 
 class BaxterPlanner:
+    """
+    Baxter's Default Planner and IK Solver.
+
+    This planner will wrap common methods and functions that are needed to plan
+    and move Baxter.This includes the IK Solver, moving Baxter to common static
+    poses and so on.
+    """
+
     def __init__(self):
+        """Will create the two arms of Baxter and configure the active_hand."""
         self.left_arm = BaxterArm("left")
         self.right_arm = BaxterArm("right")
 
+        # Active hand is  used to  keep a state of  which hand  has recently be
+        # moved  from the  planenr. For  example, a  user send  request to this
+        # script to reach a pose, the algorithms in  this script will determine
+        # how to move  there but is not the user t hat will specify which hand,
+        # the algorithm here will try both and find which one, hence by keeping
+        # an active hand, we are able to use  it for other operaitons like open
+        # and close of the gripper on that hand.
         self.active_hand = None
 
     def is_pose_reachable_by_robot(self, baxter_pose):
+        """
+        Will indicate if pose is reachable.
+
+        Will return True if either hand can reach the pose, false otherwise.
+        """
         baxter_arm, solution = self.ik_solver(baxter_pose.get_pose_stamped())
         return True if solution is not None else False
 
     def open_gripper(self):
+        """
+        Will perform 'open' command to Baxter's gripper.
+
+        Note that this will use the active hand, which is set when Baxter's
+        arm is moved in a previous execution.
+        """
         self.active_hand.gripper.open()
         time.sleep(1)
 
     def close_gripper(self):
+        """
+        Will perform 'close' command to Baxter's gripper.
+
+        Note that this will use the active hand, which is set when Baxter's
+        arm is moved in a previous execution.
+        """
         self.active_hand.gripper.close()
         time.sleep(1)
 
     def move_hand_to_head_camera(self):
+        """Will move Baxter's active hand to head."""
+        # These are static joint  configurations that  lead Baxter's hand to be
+        # in a money  detection pose (i.e  the hand is  locating  near Baxter's
+        # head camera trying to identify the banknote)
         left_hand = {'left_w0': 2.64343239272,
                      'left_w1': -0.846373899716,
                      'left_w2': -2.14527213186,
@@ -83,6 +132,12 @@ class BaxterPlanner:
         self.active_hand.limb.move_to_joint_positions(config)
 
     def move_to_position(self, baxter_pose):
+        """
+        Will move Baxter hand to the pose.
+
+        Note that the Baxter's arm that  will be used to move is not specified.
+        The  algorithm  will  try  both  and  plan  the  first  one to succeed.
+        """
         baxter_arm, solution = self.ik_solver(baxter_pose.get_pose_stamped())
 
         if solution is not None:
@@ -92,14 +147,12 @@ class BaxterPlanner:
             self.active_hand = None
 
     def set_neutral_position_of_limb(self, arm):
-        """
-        Set limb's neutral position.
-        """
+        """Set limb's neutral position."""
         arm.limb.move_to_neutral()
 
     def ik_solver(self, pose_stamped, arm=None):
         """
-        Performs Inverse Kinematic on a given limb and pose.
+        Will perform Inverse Kinematic on a given limb and pose.
 
         Given the limb and a target pose, will calculate the joint
         configuration of the limb.
@@ -116,7 +169,7 @@ class BaxterPlanner:
         try:
             rospy.wait_for_service(ns, 5.0)
             resp = iksvc(ikreq)
-        except (rospy.ServiceException, rospy.ROSException), e:
+        except (rospy.ServiceException, rospy.ROSException) as e:
             rospy.logerr("Service call failed: %s" % (e,))
 
         if (resp.isValid[0]):
@@ -131,6 +184,6 @@ class BaxterPlanner:
                 # If not solution found, try to solve it with the opossite hand
                 self.ik_solver(pose_stamped, self.right_arm)
             else:
-                print "No solution found."
+                print("No solution found.")
 
         return None, None
