@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="baxter_interface" type="joint_trajectory_action_server.py" name="trajectory_server"/>
+    <include file="$(find baxter_moveit_config)/launch/baxter_grippers.launch" output="screen" args="-d $(find baxter_cashier_perception)/launch/rviz_config.rviz"/>
+</launch>

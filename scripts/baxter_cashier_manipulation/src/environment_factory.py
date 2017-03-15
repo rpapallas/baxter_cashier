@@ -38,17 +38,17 @@ class EnvironmentFactory:
     class used in other scripts to generate the class environments required.
     """
 
-    _robotics_lab_environment = None
+    __robotics_lab_environment = None
 
     @staticmethod
     def initialize():
         """Initialise each environment."""
-        EnvironmentFactory._robotics_lab_environment = RoboticsLabEnvironment()
+        EnvironmentFactory.__robotics_lab_environment = RoboticsLabEnvironment()
 
     @staticmethod
     def get_robotics_lab_environment():
         """Will return the robotics lab environment."""
-        return EnvironmentFactory._robotics_lab_environment.clone()
+        return EnvironmentFactory.__robotics_lab_environment.clone()
 
 
 class Obstacle:
