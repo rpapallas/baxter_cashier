@@ -103,9 +103,10 @@ class BodyTrackerListener:
                 (transformation, _) = self._listener.lookupTransform(source,
                                                                      target,
                                                                      rospy.Time(0))
-                (_, rotation) = self._listener.lookupTransform("camera_link",
-                                                               "camera_depth_optical_frame",
-                                                               rospy.Time(0))
+                rotation = [-0.513, 0.520, -0.499, 0.467] if body_part == "right_hand" else [0.559, -0.504, 0.480, -0.451]
+                # (_, rotation) = self._listener.lookupTransform("camera_link",
+                #                                                "camera_depth_optical_frame",
+                #                                                rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e

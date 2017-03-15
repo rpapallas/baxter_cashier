@@ -39,8 +39,8 @@ class MoveItArm:
         self.limb.set_planner_id("RRTConnectkConfigDefault")
 
         # Error tollerance
-        self.limb.set_goal_position_tolerance(0.01)
-        self.limb.set_goal_orientation_tolerance(0.01)
+        self.limb.set_goal_position_tolerance(0.05)
+        self.limb.set_goal_orientation_tolerance(0.05)
 
         self.gripper = None
 
@@ -88,6 +88,10 @@ class MoveItPlanner:
 
         # Setup the environment. This will add obstacles to MoveIt world.
         self.scene = moveit_commander.PlanningSceneInterface()
+
+        # Don't delete this; is required for obstacles to appear in Rviz
+        rospy.sleep(1)
+
         self._create_scene()
 
         # We  create this  DisplayTrajectory  publisher which is  used below to
@@ -135,7 +139,7 @@ class MoveItPlanner:
         Will return True if it does, false otherwise.
         """
         arm.limb.set_pose_target(baxter_pose.get_pose())
-        plan = self.arm.limb.plan()
+        plan = arm.limb.plan()
 
         return False if plan.joint_trajectory.points == [] else True
 
@@ -172,11 +176,13 @@ class MoveItPlanner:
                       'right_e1': 1.99149055787}
 
         config = left_hand if self.active_hand is self.left_arm else right_hand
-
+        print "here"
         # Move Baxter's hand there.
         self.active_hand.limb.set_joint_value_target(config)
+        self.active_hand.limb.plan()
+        self.active_hand.limb.go(wait=True)
 
-    def move_to_position(self, baxter_pose, arm=None):
+    def move_to_position(self, baxter_pose):
         """
         Will move Baxter hand to the pose.
 
@@ -192,11 +198,11 @@ class MoveItPlanner:
             arm_to_use = [arm for arm in [self.left_arm, self.right_arm]
                           if self._is_pose_reachable_by_arm(baxter_pose,
                                                             arm)][0]
-
+            self.active_hand = arm_to_use
             arm_to_use.limb.set_pose_target(baxter_pose.get_pose())
             arm_to_use.limb.plan()
 
-            arm.limb.go(wait=True)
+            arm_to_use.limb.go(wait=True)
 
     def set_neutral_position_of_limb(self, arm):
         """Will moves Baxter arm to neutral position."""
