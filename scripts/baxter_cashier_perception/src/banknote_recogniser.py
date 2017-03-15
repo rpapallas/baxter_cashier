@@ -12,6 +12,8 @@ import cv2
 import numpy as np
 from baxter_cashier_manipulation.srv import *
 import time
+from matplotlib import pyplot as plt
+
 
 class BanknoteRecogniser:
     def __init__(self):

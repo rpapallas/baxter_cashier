@@ -18,6 +18,7 @@ from moveit_commander import MoveGroupCommander
 # Project specific imports
 from environment_factory import EnvironmentFactory
 from baxter_pose import BaxterPose
+from baxter_controller import BaxterArm
 
 
 class MoveItArm:
@@ -42,7 +43,8 @@ class MoveItArm:
         self.limb.set_goal_position_tolerance(0.05)
         self.limb.set_goal_orientation_tolerance(0.05)
 
-        self.gripper = None
+        self._baxter_arm = BaxterArm(side_name)
+        self.gripper = self._baxter_arm.gripper
 
         # TODO: Calibrate gripper
 
@@ -145,11 +147,11 @@ class MoveItPlanner:
 
     def open_gripper(self):
         """Will open Baxter's gripper on his active hand."""
-        pass
+        self.active_hand.gripper.open()
 
     def close_gripper(self):
         """Will close Baxter's gripper on his active hand."""
-        pass
+        self.active_hand.gripper.close()
 
     def move_hand_to_head_camera(self):
         """Will move Baxter's active hand to head."""
@@ -176,7 +178,7 @@ class MoveItPlanner:
                       'right_e1': 1.99149055787}
 
         config = left_hand if self.active_hand is self.left_arm else right_hand
-        print "here"
+
         # Move Baxter's hand there.
         self.active_hand.limb.set_joint_value_target(config)
         self.active_hand.limb.plan()
@@ -199,14 +201,34 @@ class MoveItPlanner:
                           if self._is_pose_reachable_by_arm(baxter_pose,
                                                             arm)][0]
             self.active_hand = arm_to_use
+            self.active_hand.limb.clear_pose_targets()
             arm_to_use.limb.set_pose_target(baxter_pose.get_pose())
             arm_to_use.limb.plan()
 
             arm_to_use.limb.go(wait=True)
 
-    def set_neutral_position_of_limb(self, arm):
+    def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
-        pass
+        left_config = {'left_w0': -0.231247603774,
+                                'left_w1': 1.33724775184,
+                                'left_w2': -2.79491299553,
+                                 'left_e0': -0.0908883616822,
+                                 'left_e1': 1.29813124175,
+                                 'left_s0': -0.154548564379,
+                                 'left_s1': -1.29391279458}
+
+        right_config = {'right_s0': -0.130004871773,
+                                  'right_s1': -1.17464578832,
+                                  'right_w0': 0.0901213712883,
+                                  'right_w1': 1.17196132194,
+                                  'right_w2': -0.0766990393943,
+                                  'right_e0': 0.647339892488,
+                                  'right_e1': 1.49601476339}
+
+        config = left_config if self.active_hand is self.left_arm else right_config
+        self.active_hand.limb.set_joint_value_target(config)
+        self.active_hand.limb.plan()
+        self.active_hand.limb.go(wait=True)
 
 
 if __name__ == '__main__':
