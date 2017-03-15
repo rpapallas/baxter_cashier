@@ -2,8 +2,8 @@
 """
 MoveIt! Controller.
 
-This controller bridge MoveIt with Rviz and Baxter as well as it provide an
-interface to interact with Baxter through Moveit to the project, and more
+This  controller  bridge  MoveIt  with Rviz and Baxter as well as it provide an
+interface  to interact  with  Baxter  through Moveit to  the project, and  more
 specifically to shopkeeper.py
 """
 
@@ -24,8 +24,8 @@ class MoveItArm:
     """
     Represents Baxter's Arm in MoveIt! world.
 
-    Represents a hand of Baxter through MoveIt! Group. Some reusable code has
-    been packed together into this class to make the code more readable.
+    Represents a hand of  Baxter through MoveIt!  Group. Some reusable code has
+    been  packed  together  into  this  class  to make  the code more readable.
     """
 
     def __init__(self, side_name):
@@ -50,9 +50,9 @@ class MoveItArm:
         """
         String representation of the arm.
 
-        String representation of the arm, either 'left' or 'right' string
-        will be returned. Useful when the string representation of the arm
-        is needed, like when accessing the IK solver.
+        String representation of the arm,  either 'left' or 'right' string will
+        be returned.  Useful  when the  string  representation  of the  arm  is
+        needed, like when accessing the IK solver.
         """
         return self._side_name
 
@@ -77,20 +77,20 @@ class MoveItPlanner:
         self.left_arm = MoveItArm("left")
         self.right_arm = MoveItArm("right")
 
-        # Active hand is used to keep a state of which hand has recently be
-        # moved from the planenr. For example, a user send request to this
-        # script to reach a pose, the algorithms in this script will determine
-        # how to move there but is not the user that will specify which hand,
+        # Active hand is  used to  keep a state of  which hand  has recently be
+        # moved  from the  planenr. For  example, a  user send  request to this
+        # script to reach a pose, the algorithms in  this script will determine
+        # how to move  there but is not the user t hat will specify which hand,
         # the algorithm here will try both and find which one, hence by keeping
-        # an active hand, we are able to use it for other operaitons like
-        # open and close of the gripper on that hand.
+        # an active hand, we are able to use  it for other operaitons like open
+        # and close of the gripper on that hand.
         self.active_hand = None
 
         # Setup the environment. This will add obstacles to MoveIt world.
         self.scene = moveit_commander.PlanningSceneInterface()
         self._create_scene()
 
-        # We create this DisplayTrajectory publisher which is used below to
+        # We  create this  DisplayTrajectory  publisher which is  used below to
         # publish trajectories for RVIZ to visualize.
         self.publisher = rospy.Publisher('/move_group/display_planned_path',
                                          moveit_msgs.msg.DisplayTrajectory,
@@ -100,18 +100,18 @@ class MoveItPlanner:
         """
         Will setup and add obstacles to MoveIt! world.
 
-        Using Factory design pattern we are able to define here which
-        environment to setup. The factory allows the flexibility to define
-        multiple environments like Robotics Lab, Long Room and here we can use
+        Using  Factory  design  pattern  we  are  able  to  define  here  which
+        environment  to  setup. The  factory  allows the  flexibility to define
+        multiple environments like Robotics Lab, Long Room  and here we can use
         one of those.
         """
         # Initialise the Factory of Environments
         EnvironmentFactory.initialize()
 
-        # Get University of Leeds (Robotic's Lab) environment with the
-        # obstacles of it from the factory. This environment object contains
-        # details about the obstacles specifically for this environment. Note
-        # the environment is a physical environment that contains obstacles
+        # Get  University  of  Leeds  (Robotic's  Lab)   environment  with  the
+        # obstacles  of it from the  factory. This  environment object contains
+        # details about the obstacles  specifically for this  environment. Note
+        # the  environment  is a physical  environment that  contains obstacles
         # like walls and table.
         environment = EnvironmentFactory.get_robotics_lab_environment()
 
@@ -122,15 +122,15 @@ class MoveItPlanner:
 
     def is_pose_reachable_by_robot(self, baxter_pose):
         """Will return true if baxter_pose is reachable by any Baxter arm."""
-        return any([self.is_pose_reachable_by_arm(baxter_pose, arm)
+        return any([self._is_pose_reachable_by_arm(baxter_pose, arm)
                     for arm in [self.left_arm, self.right_arm]])
 
-    def is_pose_reachable_by_arm(self, baxter_pose, arm):
+    def _is_pose_reachable_by_arm(self, baxter_pose, arm):
         """
         Will find out if the arm can reach the pose.
 
-        Given a pose and Baxter's arm will check if the planner can find a
-        plan to move the arm to the pose.
+        Given a pose and Baxter's arm will check if the planner can find a plan
+        to move the arm to the pose.
 
         Will return True if it does, false otherwise.
         """
@@ -152,8 +152,8 @@ class MoveItPlanner:
         if self.active_hand is None:
             return
 
-        # These are static joint configurations that lead Baxter's hand to be
-        # in a money detection pose (i.e the hand is locating near Baxter's
+        # These are  static joint  configurations that lead Baxter's hand to be
+        # in a  money  detection  pose (i.e the hand is  locating near Baxter's
         # head camera trying to identify the banknote)
         left_hand = {'left_w0': 2.64343239272,
                      'left_w1': -0.846373899716,
@@ -180,18 +180,18 @@ class MoveItPlanner:
         """
         Will move Baxter hand to the pose.
 
-        Note that the Baxter's arm that will be used to move is not specified.
-        The algorithm will try both and plan the first one to succeed.
+        Note that the Baxter's arm that  will be used to move is not specified.
+        The  algorithm  will  try  both  and  plan  the  first  one to succeed.
         """
         if self.is_pose_reachable_by_robot(baxter_pose):
 
-            # Simply saying, loop over both arms (left and right) and try for
-            # each arm check if it can reach `baxter_pose`, if it can append
-            # this to the list, and repeat for every arm in the list. At the
+            # Simply  saying, loop over  both arms (left and right) and try for
+            # each  arm check  if it can reach  `baxter_pose`, if it can append
+            # this to the list, and  repeat for every  arm in  the list. At the
             # end we just pick the first one (because of [0])
             arm_to_use = [arm for arm in [self.left_arm, self.right_arm]
-                          if self.is_pose_reachable_by_arm(baxter_pose,
-                                                           arm)][0]
+                          if self._is_pose_reachable_by_arm(baxter_pose,
+                                                            arm)][0]
 
             arm_to_use.limb.set_pose_target(baxter_pose.get_pose())
             arm_to_use.limb.plan()
