@@ -13,61 +13,89 @@ import numpy as np
 from baxter_cashier_manipulation.srv import *
 import time
 from matplotlib import pyplot as plt
+import tf
 
 
 class BanknoteRecogniser:
     def __init__(self):
-        self.bridge = CvBridge()
-        self.detected_amount = None
+        self._listener = tf.TransformListener()
+        self._RATE = rospy.Rate(0.3)
 
     def detect(self, request):
-        def seconds_passed(oldepoch):
-            return time.time() - oldepoch >= 5
+        found = -1
+        timeout_start = time.time()
+        timeout = 5   # [seconds]
 
-        print "Request received: " + str(request.camera_topic)
-        self.image_sub = rospy.Subscriber(request.camera_topic,
-                                          Image,
-                                          self.callback)
+        while found is None or (time.time() < timeout_start + timeout):
+            try:
+                (transformation, _) = self._listener.lookupTransform("base",
+                                                                                                     "ar_marker_5",
+                                                                                                     rospy.Time(0))
+                found = 5
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException) as e:
+                print e
 
-        since_time_started = time.time()
+            try:
+                (transformation, _) = self._listener.lookupTransform("base",
+                                                                                                     "ar_marker_1",
+                                                                                                     rospy.Time(0))
+                return 1
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException) as e:
+                print e
 
-        while True:
-            if self.detected_amount is not None or seconds_passed(since_time_started):
-                self.image_sub.unregister()
+            self._RATE.sleep()
 
-                if self.detected_amount is None:
-                    return RecogniseBanknoteResponse(-1)
+        return RecogniseBanknoteResponse(found)
 
-                temp = self.detected_amount
-                self.detected_amount = None
-                return RecogniseBanknoteResponse(temp)
+        # def seconds_passed(oldepoch):
+        #     return time.time() - oldepoch >= 5
+        #
+        # print "Request received: " + str(request.camera_topic)
+        # self.image_sub = rospy.Subscriber(request.camera_topic,
+        #                                   Image,
+        #                                   self.callback)
+        #
+        # since_time_started = time.time()
+        #
+        # while True:
+        #     if self.detected_amount is not None or seconds_passed(since_time_started):
+        #         self.image_sub.unregister()
+        #
+        #         if self.detected_amount is None:
+        #             return RecogniseBanknoteResponse(-1)
+        #
+        #         temp = self.detected_amount
+        #         self.detected_amount = None
+        #         return RecogniseBanknoteResponse(temp)
 
-    def callback(self, data):
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-        except CvBridgeError as e:
-            print e
-
-        img = cv_image
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-        lower_range_red = np.array([107, 100, 100])
-        upper_range_red = np.array([127, 255, 255])
-
-        lower_range_orange = np.array([106, 100, 100])
-        upper_range_orange = np.array([126, 255, 255])
-
-        mask_orange = cv2.inRange(hsv, lower_range_orange, upper_range_orange)
-        mask_red = cv2.inRange(hsv, lower_range_red, upper_range_red)
-
-        if np.count_nonzero(mask_red) > 40000 or np.count_nonzero(mask_orange) > 40000:
-            if np.count_nonzero(mask_red) > np.count_nonzero(mask_orange):
-                print "Detected a ONE"
-                self.detected_amount = 1
-
-            if np.count_nonzero(mask_orange) > np.count_nonzero(mask_red):
-                print "Detected a FIVE"
-                self.detected_amount = 5
+    # def callback(self, data):
+    #     try:
+    #         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
+    #     except CvBridgeError as e:
+    #         print e
+    #
+    #     img = cv_image
+    #     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    #
+    #     lower_range_red = np.array([107, 100, 100])
+    #     upper_range_red = np.array([127, 255, 255])
+    #
+    #     lower_range_orange = np.array([106, 100, 100])
+    #     upper_range_orange = np.array([126, 255, 255])
+    #
+    #     mask_orange = cv2.inRange(hsv, lower_range_orange, upper_range_orange)
+    #     mask_red = cv2.inRange(hsv, lower_range_red, upper_range_red)
+    #
+    #     if np.count_nonzero(mask_red) > 40000 or np.count_nonzero(mask_orange) > 40000:
+    #         if np.count_nonzero(mask_red) > np.count_nonzero(mask_orange):
+    #             print "Detected a ONE"
+    #             self.detected_amount = 1
+    #
+    #         if np.count_nonzero(mask_orange) > np.count_nonzero(mask_red):
+    #             print "Detected a FIVE"
+    #             self.detected_amount = 5
 
 
 if __name__ == '__main__':

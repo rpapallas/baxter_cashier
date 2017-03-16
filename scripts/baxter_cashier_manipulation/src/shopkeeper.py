@@ -118,13 +118,16 @@ class Shopkeeper:
     def take_money_from_customer(self, pose):
         self.planner.move_to_position(pose)
 
-        time.sleep(1)
+        time.sleep(5)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
-        self.planner.close_gripper()
 
         time.sleep(1)
+
+        self.planner.close_gripper()
+
+        time.sleep(5)
 
         # Moves Baxter hand to head
         self.planner.move_hand_to_head_camera()
@@ -212,21 +215,8 @@ class Shopkeeper:
 
 
 if __name__ == '__main__':
-    # baxter = Shopkeeper()
+    baxter = Shopkeeper()
     # baxter.get_list_of_users()
 
     while True:
-        rospy.wait_for_service('recognise_banknote')
-        try:
-            # Handle for calling the service
-            recognise_banknote = rospy.ServiceProxy('recognise_banknote', RecogniseBanknote)
-
-            # Use the handle as any other normal function
-            value = recognise_banknote(camera_topic="/cameras/head_camera/image")
-            if value.banknote_amount != -1:
-                print value.banknote_amount
-            else:
-                print "Nothing detected"
-        except rospy.ServiceException, e:
-            print "Service call failed: %s" % e
-        # baxter.interact()
+        baxter.interact()

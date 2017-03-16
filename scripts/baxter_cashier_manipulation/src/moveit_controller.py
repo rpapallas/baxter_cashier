@@ -40,8 +40,8 @@ class MoveItArm:
         self.limb.set_planner_id("RRTConnectkConfigDefault")
 
         # Error tollerance
-        self.limb.set_goal_position_tolerance(0.05)
-        self.limb.set_goal_orientation_tolerance(0.05)
+        self.limb.set_goal_position_tolerance(0.09)
+        self.limb.set_goal_orientation_tolerance(0.09)
 
         self._baxter_arm = BaxterArm(side_name)
         self.gripper = self._baxter_arm.gripper
@@ -202,10 +202,10 @@ class MoveItPlanner:
                                                             arm)][0]
             self.active_hand = arm_to_use
             self.active_hand.limb.clear_pose_targets()
-            arm_to_use.limb.set_pose_target(baxter_pose.get_pose())
-            arm_to_use.limb.plan()
+            self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
+            self.active_hand.limb.plan()
 
-            arm_to_use.limb.go(wait=True)
+            self.active_hand.limb.go(wait=True)
 
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
