@@ -118,13 +118,16 @@ class Shopkeeper:
     def take_money_from_customer(self, pose):
         self.planner.move_to_position(pose)
 
-        time.sleep(1)
+        time.sleep(5)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
-        self.planner.close_gripper()
 
         time.sleep(1)
+
+        self.planner.close_gripper()
+
+        time.sleep(5)
 
         # Moves Baxter hand to head
         self.planner.move_hand_to_head_camera()
