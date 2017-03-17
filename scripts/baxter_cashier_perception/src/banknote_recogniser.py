@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 
 """
-Based:
-http://answers.ros.org/question/210294/ros-python-save-snapshot-from-camera/
+    Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import rospy
@@ -29,8 +41,8 @@ class BanknoteRecogniser:
         while found is None or (time.time() < timeout_start + timeout):
             try:
                 (transformation, _) = self._listener.lookupTransform("base",
-                                                                                                     "ar_marker_5",
-                                                                                                     rospy.Time(0))
+                                                                     "ar_marker_5",
+                                                                     rospy.Time(0))
                 found = 5
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
@@ -38,8 +50,8 @@ class BanknoteRecogniser:
 
             try:
                 (transformation, _) = self._listener.lookupTransform("base",
-                                                                                                     "ar_marker_1",
-                                                                                                     rospy.Time(0))
+                                                                     "ar_marker_1",
+                                                                     rospy.Time(0))
                 return 1
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
@@ -48,54 +60,6 @@ class BanknoteRecogniser:
             self._RATE.sleep()
 
         return RecogniseBanknoteResponse(found)
-
-        # def seconds_passed(oldepoch):
-        #     return time.time() - oldepoch >= 5
-        #
-        # print "Request received: " + str(request.camera_topic)
-        # self.image_sub = rospy.Subscriber(request.camera_topic,
-        #                                   Image,
-        #                                   self.callback)
-        #
-        # since_time_started = time.time()
-        #
-        # while True:
-        #     if self.detected_amount is not None or seconds_passed(since_time_started):
-        #         self.image_sub.unregister()
-        #
-        #         if self.detected_amount is None:
-        #             return RecogniseBanknoteResponse(-1)
-        #
-        #         temp = self.detected_amount
-        #         self.detected_amount = None
-        #         return RecogniseBanknoteResponse(temp)
-
-    # def callback(self, data):
-    #     try:
-    #         cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
-    #     except CvBridgeError as e:
-    #         print e
-    #
-    #     img = cv_image
-    #     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    #
-    #     lower_range_red = np.array([107, 100, 100])
-    #     upper_range_red = np.array([127, 255, 255])
-    #
-    #     lower_range_orange = np.array([106, 100, 100])
-    #     upper_range_orange = np.array([126, 255, 255])
-    #
-    #     mask_orange = cv2.inRange(hsv, lower_range_orange, upper_range_orange)
-    #     mask_red = cv2.inRange(hsv, lower_range_red, upper_range_red)
-    #
-    #     if np.count_nonzero(mask_red) > 40000 or np.count_nonzero(mask_orange) > 40000:
-    #         if np.count_nonzero(mask_red) > np.count_nonzero(mask_orange):
-    #             print "Detected a ONE"
-    #             self.detected_amount = 1
-    #
-    #         if np.count_nonzero(mask_orange) > np.count_nonzero(mask_red):
-    #             print "Detected a FIVE"
-    #             self.detected_amount = 5
 
 
 if __name__ == '__main__':
