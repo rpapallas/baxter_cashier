@@ -1,4 +1,4 @@
-0. Introduction
+0 Introduction
 ===============
 
 This repository host the "Human-Robot Interaction for Cashier Robot" project, a undergraduate final year project at the School of Computing, University of Leeds. 
@@ -13,7 +13,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 
 
-1. Table of Contents
+1 Table of Contents
 ====================
 
   * [0. Introduction](#0-introduction)
@@ -22,7 +22,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
     * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
     * [2.2 Make use of project's wiki](#22-make-use-of-projects-wiki)
 
-2. About The Project
+2 About The Project
 ====================
 
 This project is focusing on developing packages and algorithms for Baxter Robot by Rethink Robotics. The project's aim is to make Baxter a cashier in a sweetshop. 
