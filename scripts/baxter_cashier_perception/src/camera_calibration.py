@@ -271,7 +271,7 @@ if __name__ == '__main__':
 
     # Topics to be used to publish the tf.
     base_topic = "camera_link"
-    target_topic = "torso"
+    target_topic = "base"
 
     # Load values from file
     if args.l:  # l for load

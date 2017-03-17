@@ -1,0 +1,9 @@
+<launch>
+    <arg name="machine" default="localhost" />
+    <arg name="user" default="" />
+
+    <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="false"/>
+    <include file="$(find openni2_launch)/launch/openni2.launch">
+        <arg name="depth_registration" value="true" />
+    </include>
+</launch>
