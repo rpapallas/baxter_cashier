@@ -62,8 +62,6 @@ class MoveItArm:
         self._baxter_arm = BaxterArm(side_name)
         self.gripper = self._baxter_arm.gripper
 
-        # TODO: Calibrate gripper
-
     def __str__(self):
         """
         String representation of the arm.
@@ -142,11 +140,6 @@ class MoveItPlanner:
             obstacle.set_frame_id(self.robot.get_planning_frame())
             self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
 
-    def is_pose_reachable_by_robot(self, baxter_pose):
-        """Will return true if baxter_pose is reachable by any Baxter arm."""
-        return any([self._is_pose_reachable_by_arm(baxter_pose, arm)
-                    for arm in [self.left_arm, self.right_arm]])
-
     def _is_pose_reachable_by_arm(self, baxter_pose, arm):
         """
         Will find out if the arm can reach the pose.
@@ -200,23 +193,15 @@ class MoveItPlanner:
         self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
-    def move_to_position(self, baxter_pose):
+    def move_to_position(self, baxter_pose, arm):
         """
         Will move Baxter hand to the pose.
 
         Note that the Baxter's arm that  will be used to move is not specified.
         The  algorithm  will  try  both  and  plan  the  first  one to succeed.
         """
-        if self.is_pose_reachable_by_robot(baxter_pose):
-
-            # Simply  saying, loop over  both arms (left and right) and try for
-            # each  arm check  if it can reach  `baxter_pose`, if it can append
-            # this to the list, and  repeat for every  arm in  the list. At the
-            # end we just pick the first one (because of [0])
-            arm_to_use = [arm for arm in [self.left_arm, self.right_arm]
-                          if self._is_pose_reachable_by_arm(baxter_pose,
-                                                            arm)][0]
-            self.active_hand = arm_to_use
+        if self.is_pose_reachable_by_arm(baxter_pose, arm):
+            self.active_hand = arm
             self.active_hand.limb.clear_pose_targets()
             self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
             self.active_hand.limb.plan()
@@ -226,20 +211,20 @@ class MoveItPlanner:
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
         left_config = {'left_w0': -0.231247603774,
-                                'left_w1': 1.33724775184,
-                                'left_w2': -2.79491299553,
-                                 'left_e0': -0.0908883616822,
-                                 'left_e1': 1.29813124175,
-                                 'left_s0': -0.154548564379,
-                                 'left_s1': -1.29391279458}
+                       'left_w1': 1.33724775184,
+                       'left_w2': -2.79491299553,
+                       'left_e0': -0.0908883616822,
+                       'left_e1': 1.29813124175,
+                       'left_s0': -0.154548564379,
+                       'left_s1': -1.29391279458}
 
         right_config = {'right_s0': -0.130004871773,
-                                  'right_s1': -1.17464578832,
-                                  'right_w0': 0.0901213712883,
-                                  'right_w1': 1.17196132194,
-                                  'right_w2': -0.0766990393943,
-                                  'right_e0': 0.647339892488,
-                                  'right_e1': 1.49601476339}
+                        'right_s1': -1.17464578832,
+                        'right_w0': 0.0901213712883,
+                        'right_w1': 1.17196132194,
+                        'right_w2': -0.0766990393943,
+                        'right_e0': 0.647339892488,
+                        'right_e1': 1.49601476339}
 
         config = left_config if self.active_hand is self.left_arm else right_config
         self.active_hand.limb.set_joint_value_target(config)
