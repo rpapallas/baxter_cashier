@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import rospy
+import tf
 
 # MoveIt! Specific imports
 import moveit_commander
@@ -245,6 +246,16 @@ class MoveItPlanner:
         self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
+    def get_end_effector_current_pose(self, side_name):
+        listener = tf.TransformListener()
+        while True:
+            try:
+                (transformation, rotation) = listener.lookupTransform("base", "{}_gripper".format(side_name), rospy.Time(0))
+                return BaxterPose(transformation[0], transformation[1], transformation[2], rotation[0], rotation[1], rotation[2], rotation[3])
+            except (tf.LookupException, tf.ConnectivityException,
+                    tf.ExtrapolationException) as e:
+                print e
+
 
 if __name__ == '__main__':
     rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
@@ -253,6 +264,6 @@ if __name__ == '__main__':
     pose = BaxterPose(0.72651, -0.041037, 0.19097,
                       0.56508, -0.5198, -0.54332, -0.33955)
 
-    planner.is_pose_reachable_by_robot(pose)
+    print planner.get_end_effector_current_pose("right")
 
     moveit_commander.os._exit(0)

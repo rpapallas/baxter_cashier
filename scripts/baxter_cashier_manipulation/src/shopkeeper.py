@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # System imports
 import argparse
+import os
 import sys
 import time
 
@@ -45,11 +46,14 @@ from baxter_interface import CHECK_VERSION
 
 # ROS specific imports
 import rospy
-# import rosgraph.masterapi
+import cv2
+import cv_bridge
+import rospkg
+
+from sensor_msgs.msg import (Image,)
 
 # MoveIt Imports
 import copy
-import rospy
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
@@ -86,6 +90,11 @@ class Shopkeeper:
 
         # TODO: Make this zero, is just for testing purposes set to 3
         self.amount_due = 3
+
+        # Ensure that the hand calibrated for first time
+        print "1. Please move Baxter's right hand above the first banknote."
+        raw_input("Click ENTER to set the pose...")
+        self.first_banknote_pose = self.planner.get_end_effector_current_pose("right")
 
     def interact(self):
         """
@@ -148,7 +157,8 @@ class Shopkeeper:
         recognised_banknote = self.get_banknote_value()
 
         if recognised_banknote != -1:
-            print "Received: " + str(recognised_banknote)
+            image = "five_bill_recognised.png" if recognised_banknote == 5 else "one_bill_recognised.png"
+            self.show_image_to_baxters_head_screen(image)
 
             # Since we detected amount, subtract the value from the own amount
             self.amount_due -= int(recognised_banknote)
@@ -178,6 +188,17 @@ class Shopkeeper:
             print "Service call failed: %s" % e
 
         return None
+
+    def show_image_to_baxters_head_screen(self, image_path):
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('baxter_cashier_manipulation') + "/img/" + image_path
+        img = cv2.imread(path)
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
+
+        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+        pub.publish(msg)
+        # Sleep to allow from image to be published
+        rospy.sleep(1)
 
     def give_money_to_customer(self, pose):
         if self.amount_due <= -5:
