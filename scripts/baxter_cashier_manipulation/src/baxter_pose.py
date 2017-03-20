@@ -25,7 +25,7 @@ from geometry_msgs.msg import (
 
 from std_msgs.msg import Header
 import rospy
-
+import time
 
 class BaxterPose:
     """Represents a pose that can be used in IK Solvers to solve."""
@@ -40,6 +40,8 @@ class BaxterPose:
         self.rotation_y = y2
         self.rotation_z = z3
         self.rotation_w = w
+
+        self.created = time.time()
 
     def __str__(self):
         """String representation of the pose"""
