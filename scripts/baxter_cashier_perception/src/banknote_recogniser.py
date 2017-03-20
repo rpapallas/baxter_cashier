@@ -52,7 +52,7 @@ class BanknoteRecogniser:
                 (transformation, _) = self._listener.lookupTransform("base",
                                                                      "ar_marker_1",
                                                                      rospy.Time(0))
-                return 1
+                found = 1
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
                 print e
