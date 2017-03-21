@@ -140,7 +140,7 @@ class MoveItPlanner:
             obstacle.set_frame_id(self.robot.get_planning_frame())
             self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
 
-    def _is_pose_reachable_by_arm(self, baxter_pose, arm):
+    def is_pose_reachable_by_arm(self, baxter_pose, arm):
         """
         Will find out if the arm can reach the pose.
 
