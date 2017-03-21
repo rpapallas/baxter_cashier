@@ -137,7 +137,7 @@ class Shopkeeper:
                 if self.amount_due < 0:  # Baxter owns money
                     self.give_money_to_customer(pose, arm)
                 else:  # Customer owns money
-                    self.take_money_from_customer(pose)
+                    self.take_money_from_customer(pose, arm)
             else:
                 print "Wasn't able to move hand to goal position"
 
@@ -201,7 +201,7 @@ class Shopkeeper:
         img = cv2.imread(path)
         msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
 
-        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True)
+        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True, queue_size=20)
         pub.publish(msg)
         # Sleep to allow for image to be published
         rospy.sleep(1)
