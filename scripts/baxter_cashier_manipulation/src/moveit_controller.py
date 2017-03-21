@@ -25,6 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import rospy
 import tf
+import baxter_interface
+from baxter_interface import Gripper
+from baxter_interface import CHECK_VERSION
 
 # MoveIt! Specific imports
 import moveit_commander
@@ -35,6 +38,42 @@ from moveit_commander import MoveGroupCommander
 from environment_factory import EnvironmentFactory
 from baxter_pose import BaxterPose
 from baxter_controller import BaxterArm
+
+
+class BaxterArm():
+    """Represents a Baxter Arm."""
+
+    def __init__(self, side_name):
+        """Initialise the arm with some useful configuration."""
+        # The string side_name is used for representation purposes (ie __str__)
+        self._side_name = side_name
+
+        # Initialise the limb and gripper of the arm
+        self.limb = baxter_interface.Limb(side_name)
+        self.gripper = Gripper(side_name, CHECK_VERSION)
+
+        # Set the speed of the arm
+        self.limb.set_joint_position_speed(0.1)
+
+        # Calibrate the gripper
+        self.gripper.calibrate()
+
+    def __str__(self):
+        """
+        String  representation  of the  arm.
+        Either  'left'  or  'right'  string  will be returned. Useful  when the
+        string representation of the arm is needed, like when  accessing the IK
+        solver.
+        """
+        return self._side_name
+
+    def is_left(self):
+        """Will return true if this is the left arm, fale otherwise."""
+        return True if self._side_name == "left" else False
+
+    def is_right(self):
+        """Will return true if this is the right arm, fale otherwise."""
+        return True if self._side_name == "right" else False
 
 
 class MoveItArm:
@@ -56,8 +95,8 @@ class MoveItArm:
         self.limb.set_planner_id("RRTConnectkConfigDefault")
 
         # Error tollerance
-        self.limb.set_goal_position_tolerance(0.09)
-        self.limb.set_goal_orientation_tolerance(0.09)
+        self.limb.set_goal_position_tolerance(0.01)
+        self.limb.set_goal_orientation_tolerance(0.01)
 
         self._baxter_arm = BaxterArm(side_name)
         self.gripper = self._baxter_arm.gripper
@@ -207,6 +246,18 @@ class MoveItPlanner:
             self.active_hand.limb.plan()
 
             self.active_hand.limb.go(wait=True)
+
+    def leave_banknote_to_the_table(self):
+        pose_left = BaxterPose(0.807502569306, -0.0199779026662, -0.0804409779662, -0.352530183014, 0.67035681971, -0.623037729619, -0.195366813466)
+        pose_right = BaxterPose(0.876858771261, 0.0543512044227, -0.0689541072762, -0.368683595952, 0.681493836454, 0.435025807256, 0.458684100414)
+
+        pose = pose_left if self.active_hand is self.left_arm else pose_right
+
+        self.move_to_position(pose, self.active_hand)
+        rospy.sleep(1)
+        self.open_gripper()
+        rospy.sleep(1)
+        self.set_neutral_position_of_limb()
 
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""

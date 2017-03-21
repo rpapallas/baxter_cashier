@@ -102,6 +102,9 @@ class Shopkeeper:
 
         # Do this while customer own money or baxter owns money
         while self.amount_due != 0:
+            if self.amount_due < 0:
+                self.give_money_to_customer()
+
             # Get the hand pose of customer's two hands.
             left_pose, right_pose = self.get_pose_from_space()
 
@@ -134,9 +137,6 @@ class Shopkeeper:
 
             # If we found a reachable pose
             if is_reachable:
-                if self.amount_due < 0:  # Baxter owns money
-                    self.give_money_to_customer(pose, arm)
-                else:  # Customer owns money
                     self.take_money_from_customer(pose, arm)
             else:
                 print "Wasn't able to move hand to goal position"
@@ -167,7 +167,7 @@ class Shopkeeper:
             # Since we detected amount, subtract the value from the own amount
             self.amount_due -= int(recognised_banknote)
             self.customer_last_pose = (pose, arm)
-            # TODO: Put the banknote to the table
+            self.planner.leave_banknote_to_the_table()
         else:
             self.show_image_to_baxters_head_screen("unable_to_recognise.png")
 
@@ -206,22 +206,36 @@ class Shopkeeper:
         # Sleep to allow for image to be published
         rospy.sleep(1)
 
-    def give_money_to_customer(self, pose):
-        if self.amount_due <= -5:
-            money_to_give_back = 5
-            self.take_a_five_banknote()
-        elif self.amount_due >= -4 and self.amount_due <= -1:
-            money_to_give_back = 1
-            self.take_a_one_banknote()
+    def pick_banknote(self, arm):
+        print "Picking..."
+        self.planner.active_hand = arm # TODO: Make sure that this won't happen again by passing the arm in gripper open/close
+        self.planner.open_gripper()
+        up = self.first_banknote_pose
+        up.transformation_z += 0.05
+        self.planner.move_to_position(up, arm)
+        rospy.sleep(1)
+        self.planner.move_to_position(self.first_banknote_pose, arm)
+        rospy.sleep(1)
+        self.planner.close_gripper()
+        self.planner.set_neutral_position_of_limb()
+
+    def give_money_to_customer(self):
+        money_to_give_back = 1
+        self.pick_banknote(self.planner.right_arm)
 
         pose, baxter_arm = self.customer_last_pose
-        self.planner.move_to_position(pose, baxter_arm)
+        self.planner.move_to_position(pose, self.planner.right_arm) # TODO: Dynamic hand
 
         # Waiting user to reach the robot to get the money
-        time.sleep(2)
+        rospy.sleep(2)
 
         self.planner.open_gripper()
         self.amount_due += money_to_give_back
+
+        if self.amount_due < 0:
+            self.give_money_to_customer()
+        else:
+            self.planner.set_neutral_position_of_limb()
 
     def get_pose_from_space(self):
         '''
