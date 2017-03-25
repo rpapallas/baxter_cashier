@@ -40,42 +40,6 @@ from baxter_pose import BaxterPose
 from baxter_controller import BaxterArm
 
 
-class BaxterArm():
-    """Represents a Baxter Arm."""
-
-    def __init__(self, side_name):
-        """Initialise the arm with some useful configuration."""
-        # The string side_name is used for representation purposes (ie __str__)
-        self._side_name = side_name
-
-        # Initialise the limb and gripper of the arm
-        self.limb = baxter_interface.Limb(side_name)
-        self.gripper = Gripper(side_name, CHECK_VERSION)
-
-        # Set the speed of the arm
-        self.limb.set_joint_position_speed(0.1)
-
-        # Calibrate the gripper
-        self.gripper.calibrate()
-
-    def __str__(self):
-        """
-        String  representation  of the  arm.
-        Either  'left'  or  'right'  string  will be returned. Useful  when the
-        string representation of the arm is needed, like when  accessing the IK
-        solver.
-        """
-        return self._side_name
-
-    def is_left(self):
-        """Will return true if this is the left arm, fale otherwise."""
-        return True if self._side_name == "left" else False
-
-    def is_right(self):
-        """Will return true if this is the right arm, fale otherwise."""
-        return True if self._side_name == "right" else False
-
-
 class MoveItArm:
     """
     Represents Baxter's Arm in MoveIt! world.
@@ -90,6 +54,7 @@ class MoveItArm:
 
         # This is the reference to Baxter's arm.
         self.limb = MoveGroupCommander("{}_arm".format(side_name))
+        self.gripper = self.limb.set_end_effector_link("{}_gripper".format(side_name))
 
         # This solver seems to be better for finding solution among obstacles
         self.limb.set_planner_id("RRTConnectkConfigDefault")
@@ -97,9 +62,6 @@ class MoveItArm:
         # Error tollerance
         self.limb.set_goal_position_tolerance(0.01)
         self.limb.set_goal_orientation_tolerance(0.01)
-
-        self._baxter_arm = BaxterArm(side_name)
-        self.gripper = self._baxter_arm.gripper
 
     def __str__(self):
         """
@@ -283,14 +245,11 @@ class MoveItPlanner:
         self.active_hand.limb.go(wait=True)
 
     def get_end_effector_current_pose(self, side_name):
-        listener = tf.TransformListener()
-        while True:
-            try:
-                (transformation, rotation) = listener.lookupTransform("base", "{}_gripper".format(side_name), rospy.Time(0))
-                return BaxterPose(transformation[0], transformation[1], transformation[2], rotation[0], rotation[1], rotation[2], rotation[3])
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException) as e:
-                print e
+        arm = self.left_arm if side_name == "left" else self.right_arm
+        pose_stamped = arm.get_current_pose()
+        x, y, z = pose_stamped.pose.position
+        x2, y2, z2, w = pose_stamped.pose.orientation
+        return BaxterPose(x, y, z, x2, y2, z2, w)
 
 
 if __name__ == '__main__':
