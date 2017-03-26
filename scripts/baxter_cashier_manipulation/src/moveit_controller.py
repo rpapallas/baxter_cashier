@@ -54,7 +54,8 @@ class MoveItArm:
 
         # This is the reference to Baxter's arm.
         self.limb = MoveGroupCommander("{}_arm".format(side_name))
-        self.gripper = self.limb.set_end_effector_link("{}_gripper".format(side_name))
+        self.limb.set_end_effector_link("{}_gripper".format(side_name))
+        self.gripper = Gripper(side_name, CHECK_VERSION)
 
         # This solver seems to be better for finding solution among obstacles
         self.limb.set_planner_id("RRTConnectkConfigDefault")
@@ -157,11 +158,15 @@ class MoveItPlanner:
 
     def open_gripper(self):
         """Will open Baxter's gripper on his active hand."""
-        self.active_hand.gripper.open()
+        # We would like this operation to be blocking until is completed
+        # timeout by default is 0.5
+        self.active_hand.gripper.open(block=True)
 
     def close_gripper(self):
         """Will close Baxter's gripper on his active hand."""
-        self.active_hand.gripper.close()
+        # We would like this operation to be blocking until is completed
+        # timeout by default is 0.5
+        self.active_hand.gripper.close(block=True)
 
     def move_hand_to_head_camera(self):
         """Will move Baxter's active hand to head."""
@@ -210,15 +215,30 @@ class MoveItPlanner:
             self.active_hand.limb.go(wait=True)
 
     def leave_banknote_to_the_table(self):
-        pose_left = BaxterPose(0.807502569306, -0.0199779026662, -0.0804409779662, -0.352530183014, 0.67035681971, -0.623037729619, -0.195366813466)
-        pose_right = BaxterPose(0.876858771261, 0.0543512044227, -0.0689541072762, -0.368683595952, 0.681493836454, 0.435025807256, 0.458684100414)
+        # Pose for Baxter's left arm
+        pose_left = BaxterPose(0.807502569306,
+                               -0.0199779026662,
+                               -0.0804409779662,
+                               -0.352530183014,
+                               0.67035681971,
+                               -0.623037729619,
+                               -0.195366813466)
 
+        # Pose for Baxter's right arm
+        pose_right = BaxterPose(0.876858771261,
+                                0.0543512044227,
+                                -0.0689541072762,
+                                -0.368683595952,
+                                0.681493836454,
+                                0.435025807256,
+                                0.458684100414)
+
+        # Identify which is the active hand and use the configuration
+        # accordingly
         pose = pose_left if self.active_hand is self.left_arm else pose_right
 
         self.move_to_position(pose, self.active_hand)
-        rospy.sleep(1)
         self.open_gripper()
-        rospy.sleep(1)
         self.set_neutral_position_of_limb()
 
     def set_neutral_position_of_limb(self):
