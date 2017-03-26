@@ -24,10 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import rospy
-import tf
-import baxter_interface
-from baxter_interface import Gripper
-from baxter_interface import CHECK_VERSION
 
 # MoveIt! Specific imports
 import moveit_commander
@@ -37,7 +33,6 @@ from moveit_commander import MoveGroupCommander
 # Project specific imports
 from environment_factory import EnvironmentFactory
 from baxter_pose import BaxterPose
-from baxter_controller import BaxterArm
 
 
 class MoveItArm:
@@ -55,7 +50,6 @@ class MoveItArm:
         # This is the reference to Baxter's arm.
         self.limb = MoveGroupCommander("{}_arm".format(side_name))
         self.limb.set_end_effector_link("{}_gripper".format(side_name))
-        self.gripper = Gripper(side_name, CHECK_VERSION)
 
         # This solver seems to be better for finding solution among obstacles
         self.limb.set_planner_id("RRTConnectkConfigDefault")
@@ -82,6 +76,20 @@ class MoveItArm:
         """Will return True if this is the right arm, false otherwise."""
         return True if self._side_name == "right" else False
 
+    def open_gripper(self):
+        """Will open Baxter's gripper on his active hand."""
+        self.limb.set_joint_value_target("{}_gripper".format(self._side_name),
+                                         100.0)
+        self.limb.plan()
+        self.limb.go(wait=True)
+
+    def close_gripper(self):
+        """Will close Baxter's gripper on his active hand."""
+        self.limb.set_joint_value_target("{}_gripper".format(self._side_name),
+                                         0.0)
+        self.limb.plan()
+        self.limb.go(wait=True)
+
 
 class MoveItPlanner:
     """Will configure and initialise MoveIt to be used in shopkeeper.py."""
@@ -107,7 +115,7 @@ class MoveItPlanner:
         # Setup the environment. This will add obstacles to MoveIt world.
         self.scene = moveit_commander.PlanningSceneInterface()
 
-        # Don't delete this; is required for obstacles to appear in Rviz
+        # NOTE: Don't delete this; is required for obstacles to appear in Rviz
         rospy.sleep(1)
 
         self._create_scene()
@@ -156,18 +164,6 @@ class MoveItPlanner:
 
         return False if plan.joint_trajectory.points == [] else True
 
-    def open_gripper(self):
-        """Will open Baxter's gripper on his active hand."""
-        # We would like this operation to be blocking until is completed
-        # timeout by default is 0.5
-        self.active_hand.gripper.open(block=True)
-
-    def close_gripper(self):
-        """Will close Baxter's gripper on his active hand."""
-        # We would like this operation to be blocking until is completed
-        # timeout by default is 0.5
-        self.active_hand.gripper.close(block=True)
-
     def move_hand_to_head_camera(self):
         """Will move Baxter's active hand to head."""
         if self.active_hand is None:
@@ -192,7 +188,7 @@ class MoveItPlanner:
                       'right_e0': 2.33395176877,
                       'right_e1': 1.99149055787}
 
-        config = left_hand if self.active_hand is self.left_arm else right_hand
+        config = left_hand if self.active_hand.is_left() else right_hand
 
         # Move Baxter's hand there.
         self.active_hand.limb.set_joint_value_target(config)
@@ -215,6 +211,12 @@ class MoveItPlanner:
             self.active_hand.limb.go(wait=True)
 
     def leave_banknote_to_the_table(self):
+        """
+        Will leave the banknote to the table.
+
+        Will move the hand to a pose to depose the banknote to the table,
+        by openning the gripper and leaving the banknote to the table.
+        """
         # Pose for Baxter's left arm
         pose_left = BaxterPose(0.807502569306,
                                -0.0199779026662,
@@ -235,7 +237,7 @@ class MoveItPlanner:
 
         # Identify which is the active hand and use the configuration
         # accordingly
-        pose = pose_left if self.active_hand is self.left_arm else pose_right
+        pose = pose_left if self.active_hand.is_left() else pose_right
 
         self.move_to_position(pose, self.active_hand)
         self.open_gripper()
@@ -259,17 +261,30 @@ class MoveItPlanner:
                         'right_e0': 0.647339892488,
                         'right_e1': 1.49601476339}
 
-        config = left_config if self.active_hand is self.left_arm else right_config
+        config = left_config if self.active_hand.is_left() else right_config
         self.active_hand.limb.set_joint_value_target(config)
         self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
     def get_end_effector_current_pose(self, side_name):
+        """
+        Will return the current pose of the end-effector.
+
+        This method will return the current pose of the given side end-effector
+        """
         arm = self.left_arm if side_name == "left" else self.right_arm
         pose_stamped = arm.get_current_pose()
         x, y, z = pose_stamped.pose.position
         x2, y2, z2, w = pose_stamped.pose.orientation
         return BaxterPose(x, y, z, x2, y2, z2, w)
+
+    def open_gripper(self):
+        """Will open the gripper of the active hand."""
+        self.active_hand.open_gripper()
+
+    def close_gripper(self):
+        """Will close the gripper of the active hand."""
+        self.active_hand.close_gripper()
 
 
 if __name__ == '__main__':
@@ -279,6 +294,6 @@ if __name__ == '__main__':
     pose = BaxterPose(0.72651, -0.041037, 0.19097,
                       0.56508, -0.5198, -0.54332, -0.33955)
 
-    print planner.get_end_effector_current_pose("right")
+    # print planner.get_end_effector_current_pose("right")
 
     moveit_commander.os._exit(0)
