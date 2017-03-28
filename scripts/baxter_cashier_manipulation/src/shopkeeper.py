@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # System imports
 import argparse
+import threading
 import os
 import sys
 import time
@@ -90,6 +91,8 @@ class Shopkeeper:
         print "1. Please move Baxter's right hand above the first banknote."
         raw_input("Click ENTER to set the pose...")
         self.first_banknote_pose = self.planner.get_end_effector_current_pose("right")
+        self.planner.active_hand = self.planner.right_arm
+        self.planner.set_neutral_position_of_limb()
 
     def interact(self):
         """
@@ -144,20 +147,22 @@ class Shopkeeper:
     def take_money_from_customer(self, pose, arm):
         self.planner.move_to_position(pose, arm)
 
-        time.sleep(1)
+        rospy.sleep(1)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
 
-        time.sleep(1)
+        rospy.sleep(1)
 
         self.planner.close_gripper()
 
-        time.sleep(1)
+        rospy.sleep(1)
 
         # Moves Baxter hand to head
         self.planner.move_hand_to_head_camera()
+        rospy.sleep(1)
 
+        self.run_nonblocking(self.make_eyes_animated_reading_banknote)
         recognised_banknote = self.get_banknote_value()
 
         if recognised_banknote != -1:
@@ -168,6 +173,8 @@ class Shopkeeper:
             self.amount_due -= int(recognised_banknote)
             self.customer_last_pose = (pose, arm)
             self.planner.leave_banknote_to_the_table()
+            rospy.sleep(1)
+            self.show_eyes_normal()
         else:
             self.show_image_to_baxters_head_screen("unable_to_recognise.png")
 
@@ -195,6 +202,28 @@ class Shopkeeper:
 
         return None
 
+    def run_nonblocking(self, function):
+        thread = threading.Thread(target=function)
+        thread.start()
+
+    def make_eyes_animated_reading_banknote(self):
+        self.show_eyes_normal()
+        self.show_eyes_focusing()
+        self.show_eyes_focusing_right()
+        self.show_eyes_focusing_left()
+
+    def show_eyes_normal(self):
+        self.show_image_to_baxters_head_screen("normal_eyes.png")
+
+    def show_eyes_focusing(self):
+        self.show_image_to_baxters_head_screen("looking_eyes.png")
+
+    def show_eyes_focusing_left(self):
+        self.show_image_to_baxters_head_screen("looking_left_eyes.png")
+
+    def show_eyes_focusing_right(self):
+        self.show_image_to_baxters_head_screen("looking_right_eyes.png")
+
     def show_image_to_baxters_head_screen(self, image_path):
         rospack = rospkg.RosPack()
         path = rospack.get_path('baxter_cashier_manipulation') + "/img/" + image_path
@@ -210,14 +239,15 @@ class Shopkeeper:
         print "Picking..."
         self.planner.active_hand = arm # TODO: Make sure that this won't happen again by passing the arm in gripper open/close
         self.planner.open_gripper()
-        up = self.first_banknote_pose
-        up.transformation_z += 0.05
-        self.planner.move_to_position(up, arm)
         rospy.sleep(1)
+
         self.planner.move_to_position(self.first_banknote_pose, arm)
         rospy.sleep(1)
+
         self.planner.close_gripper()
+        rospy.sleep(1)
         self.planner.set_neutral_position_of_limb()
+        rospy.sleep(1)
 
     def give_money_to_customer(self):
         money_to_give_back = 1
