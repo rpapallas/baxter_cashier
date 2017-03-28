@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import rospy
+from baxter_interface import Gripper, Limb
+from baxter_interface import CHECK_VERSION
 
 # MoveIt! Specific imports
 import moveit_commander
@@ -50,6 +52,8 @@ class MoveItArm:
         # This is the reference to Baxter's arm.
         self.limb = MoveGroupCommander("{}_arm".format(side_name))
         self.limb.set_end_effector_link("{}_gripper".format(side_name))
+        self.gripper = Gripper(side_name, CHECK_VERSION)
+        self._limb = Limb(side_name)
 
         # This solver seems to be better for finding solution among obstacles
         self.limb.set_planner_id("RRTConnectkConfigDefault")
@@ -78,17 +82,11 @@ class MoveItArm:
 
     def open_gripper(self):
         """Will open Baxter's gripper on his active hand."""
-        self.limb.set_joint_value_target("{}_gripper".format(self._side_name),
-                                         100.0)
-        self.limb.plan()
-        self.limb.go(wait=True)
+        self.gripper.open(block=True)
 
     def close_gripper(self):
         """Will close Baxter's gripper on his active hand."""
-        self.limb.set_joint_value_target("{}_gripper".format(self._side_name),
-                                         0.0)
-        self.limb.plan()
-        self.limb.go(wait=True)
+        self.gripper.close(block=True)
 
 
 class MoveItPlanner:
@@ -273,9 +271,13 @@ class MoveItPlanner:
         This method will return the current pose of the given side end-effector
         """
         arm = self.left_arm if side_name == "left" else self.right_arm
-        pose_stamped = arm.get_current_pose()
-        x, y, z = pose_stamped.pose.position
-        x2, y2, z2, w = pose_stamped.pose.orientation
+        pose = arm._limb.endpoint_pose()
+
+        position = pose["position"]
+        x, y, z = [position.x, position.y, position.z]
+
+        orientation = pose["orientation"]
+        x2, y2, z2, w = [orientation.x, orientation.y, orientation.z, orientation.w]
         return BaxterPose(x, y, z, x2, y2, z2, w)
 
     def open_gripper(self):
@@ -291,9 +293,6 @@ if __name__ == '__main__':
     rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
     planner = MoveItPlanner()
 
-    pose = BaxterPose(0.72651, -0.041037, 0.19097,
-                      0.56508, -0.5198, -0.54332, -0.33955)
-
-    # print planner.get_end_effector_current_pose("right")
+    print planner.get_end_effector_current_pose("right")
 
     moveit_commander.os._exit(0)
