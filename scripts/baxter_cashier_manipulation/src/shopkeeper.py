@@ -70,12 +70,18 @@ from moveit_controller import MoveItPlanner
 
 
 class Banknote:
+    """
+    This class represent a single banknote on the table.
+    """
     def __init__(self, pose):
         self.pose = pose
         self.is_available = True
 
 
 class BanknotesOnTable:
+    """
+    This class represents the banknotes on the one side of the table.
+    """
     def __init__(self, initial_pose, table_side, num_of_remaining_banknotes):
         self._table_side = table_side
         self._initial_pose = initial_pose
@@ -171,6 +177,7 @@ class Shopkeeper:
 
         for banknote in banknotes_on_table.banknotes[1:]:
             self.planner.move_to_position(banknote.pose, arm)
+            rospy.sleep(1)
 
         self.planner.active_hand = arm
         self.planner.set_neutral_position_of_limb()
@@ -187,7 +194,13 @@ class Shopkeeper:
             """Checks whether the pose is recent or not."""
             return (time.time() - pose.created) > 3
 
+        # Make Baxter's screen eyes to shown normal
         self.show_eyes_normal()
+
+        # Since we have new iteration here, ensure that the position of the
+        # banknotes on the table is reset
+        self.banknotes_table_left.reset_availability_for_all_banknotes()
+        self.banknotes_table_right.reset_availability_for_all_banknotes()
 
         # Do this while customer own money or baxter owns money
         while self.amount_due != 0:
@@ -353,7 +366,6 @@ class Shopkeeper:
 
         if self.amount_due >= 0:
             self.planner.set_neutral_position_of_limb()
-
 
     def get_pose_from_space(self):
         '''

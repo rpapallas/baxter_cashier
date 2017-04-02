@@ -101,6 +101,14 @@ class BodyTrackerListener:
 
         return GetUserPoseResponse(tran, rot)
 
+    def pose_elimination(self, hand, elbow, shoulder):
+        """
+        This algorithm eliminates poses that are not in the hand-pose.
+        """
+        pass
+
+
+
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
         source = '/base'
