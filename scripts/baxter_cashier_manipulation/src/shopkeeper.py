@@ -37,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # System imports
 import argparse
+import copy
 import threading
 import os
 import sys
@@ -88,7 +89,7 @@ class BanknotesOnTable:
         self._number_of_remaining_banknotes = num_of_remaining_banknotes
         self.banknotes = [Banknote(initial_pose)]
 
-        self._calculate_pose_of_remaining_poses(self)
+        self._calculate_pose_of_remaining_poses()
 
     def is_left(self):
         return True if self._table_side == "left" else False
@@ -109,11 +110,12 @@ class BanknotesOnTable:
         return None
 
     def _calculate_pose_of_remaining_poses(self):
-        static_x_to_be_added = 0.05  # 5cm
+        static_x_to_be_added = 0.10  # 10cm
 
         for _ in range(0, self._number_of_remaining_banknotes):
-            new_pose = self.banknotes[-1].transformation_x + static_x_to_be_added
-            self.banknotes.append(Banknote(new_pose))
+            new_pose = copy.deepcopy(self.banknotes[-1])
+            new_pose.pose.transformation_x += static_x_to_be_added
+            self.banknotes.append(new_pose)
 
 
 class Shopkeeper:
@@ -164,7 +166,7 @@ class Shopkeeper:
         print " Calibrating poses of banknotes of the table's side: " + side
         print "=============================================================="
 
-        print "1. Please move Baxter's right hand above the first banknote."
+        print "1. Please move Baxter's {} hand above the first banknote.".format(side)
         raw_input("Press ENTER to set the pose...")
         initial_pose = self.planner.get_end_effector_current_pose(side)
 
@@ -226,7 +228,7 @@ class Shopkeeper:
 
             elif self.pose_is_reachable(right_pose, "left"):
                 self.take_money_from_customer(right_pose,
-                                              self.planner.right_arm)
+                                              self.planner.left_arm)
 
             else:
                 print "Wasn't able to move hand to goal position"
@@ -234,7 +236,7 @@ class Shopkeeper:
     def pose_is_reachable(self, pose, side):
         arm = self.planner.left_arm if side == "left" else self.planner.right_arm
 
-        if not left_pose.is_empty():
+        if not pose.is_empty():
             # Verify that Baxter can move there
             is_reachable = self.planner.is_pose_reachable_by_arm(pose, arm)
             return is_reachable
@@ -355,9 +357,9 @@ class Shopkeeper:
         customer_hand_pose, baxter_arm = self.customer_last_pose
         money_to_give_back = 1
 
-        self.pick_banknote_from_table(arm)
+        self.pick_banknote_from_table(baxter_arm)
         self.planner.move_to_position(customer_hand_pose,
-                                      arm)
+                                      baxter_arm)
 
         # Waiting user to reach the robot to get the money
         rospy.sleep(2)
