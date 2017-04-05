@@ -37,6 +37,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # System imports
 import argparse
+import copy
+import threading
+import os
 import sys
 import time
 
@@ -45,11 +48,14 @@ from baxter_interface import CHECK_VERSION
 
 # ROS specific imports
 import rospy
-# import rosgraph.masterapi
+import cv2
+import cv_bridge
+import rospkg
+
+from sensor_msgs.msg import (Image,)
 
 # MoveIt Imports
 import copy
-import rospy
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
@@ -64,9 +70,52 @@ from baxter_controller import BaxterPlanner
 from moveit_controller import MoveItPlanner
 
 
-def planner_factory(planner="baxter"):
-    planners = dict(baxter=BaxterPlanner, moveit=MoveItPlanner)
-    return planners[planner]()
+class Banknote:
+    """
+    This class represent a single banknote on the table.
+    """
+    def __init__(self, pose):
+        self.pose = pose
+        self.is_available = True
+
+
+class BanknotesOnTable:
+    """
+    This class represents the banknotes on the one side of the table.
+    """
+    def __init__(self, initial_pose, table_side, num_of_remaining_banknotes):
+        self._table_side = table_side
+        self._initial_pose = initial_pose
+        self._number_of_remaining_banknotes = num_of_remaining_banknotes
+        self.banknotes = [Banknote(initial_pose)]
+
+        self._calculate_pose_of_remaining_poses()
+
+    def is_left(self):
+        return True if self._table_side == "left" else False
+
+    def is_right(self):
+        return True if self._table_side == "right" else False
+
+    def reset_availability_for_all_banknotes(self):
+        for banknote in self.banknotes:
+            banknote.is_available = True
+
+    def get_next_available_banknote(self):
+        for banknote in self.banknotes:
+            if banknote.is_available:
+                banknote.is_available = False
+                return banknote
+
+        return None
+
+    def _calculate_pose_of_remaining_poses(self):
+        static_x_to_be_added = 0.10  # 10cm
+
+        for _ in range(0, self._number_of_remaining_banknotes):
+            new_pose = copy.deepcopy(self.banknotes[-1])
+            new_pose.pose.transformation_x += static_x_to_be_added
+            self.banknotes.append(new_pose)
 
 
 class Shopkeeper:
@@ -82,10 +131,60 @@ class Shopkeeper:
         self._money_recognition_camera_topic = "/cameras/head_camera/image"
 
         # Baxter's libms configured
-        self.planner = planner_factory(planner="moveit")
+        self.planner = MoveItPlanner()
 
         # TODO: Make this zero, is just for testing purposes set to 3
         self.amount_due = 3
+        self.customer_last_pose = None
+
+        self.banknotes_table_left = self.set_banknotes_on_table_for_side("left")
+        self.banknotes_table_right = self.set_banknotes_on_table_for_side("right")
+
+    def set_banknotes_on_table_for_side(self, side):
+        """
+        Records and calculates the poses of the banknotes on the table.
+
+        This function will ask two questions from the user:
+        (1) To move Baxter's arm to the position of the first banknote.
+        (2) The number of the remaining banknotes on the table.
+
+        It will then record the pose and also calculate the poses of the \
+        remaining banknotes.
+
+        This function will also move Baxter's arms to the remaining banknotes
+        just to ensure that the remaining banknotes are placed correctly.
+
+        Finally the returned list of poses will include a list tuple
+        (pose, bool) for every banknote on the table of either left or right
+        side. The `pose` is the pose of the corresponding banknote, where the
+        bool value (initially set to True) represents if Baxter have used this
+        banknote.
+        """
+        arm = self.planner.left_arm if side == "left" else self.planner.right_arm
+
+        print "=============================================================="
+        print " Calibrating poses of banknotes of the table's side: " + side
+        print "=============================================================="
+
+        print "1. Please move Baxter's {} hand above the first banknote.".format(side)
+        raw_input("Press ENTER to set the pose...")
+        initial_pose = self.planner.get_end_effector_current_pose(side)
+
+        # Calculate the remaining poses
+        num = int(raw_input("2. Number of REMAINING banknotes on this side of the table? : "))
+
+        banknotes_on_table = BanknotesOnTable(initial_pose=initial_pose,
+                                              table_side=side,
+                                              num_of_remaining_banknotes=num)
+
+        for banknote in banknotes_on_table.banknotes[1:]:
+            self.planner.move_to_position(banknote.pose, arm)
+            rospy.sleep(1)
+
+        self.planner.active_hand = arm
+        self.planner.set_neutral_position_of_limb()
+
+        return banknotes_on_table
 
     def interact(self):
         """
@@ -93,69 +192,90 @@ class Shopkeeper:
         determining if the next action is to get or give money.
         """
 
+        def pose_is_outdated(pose):
+            """Checks whether the pose is recent or not."""
+            return (time.time() - pose.created) > 3
+
+        # Make Baxter's screen eyes to shown normal
+        self.show_eyes_normal()
+
+        # Since we have new iteration here, ensure that the position of the
+        # banknotes on the table is reset
+        self.banknotes_table_left.reset_availability_for_all_banknotes()
+        self.banknotes_table_right.reset_availability_for_all_banknotes()
+
         # Do this while customer own money or baxter owns money
         while self.amount_due != 0:
+
+            # If the amount due is negative, Baxter owns money
+            if self.amount_due < 0:
+                self.give_money_to_customer()
+                continue
+
             # Get the hand pose of customer's two hands.
             left_pose, right_pose = self.get_pose_from_space()
-            is_reachable = False
-            pose = None
 
-            print left_pose
-            print right_pose
+            # If the pose detected is not too recent, ignore.
+            if pose_is_outdated(left_pose) and pose_is_outdated(right_pose):
+                continue
 
-            # If the left pose is not empty (i.e a user is there)
-            if not left_pose.is_empty():
-                # Verify that Baxter can move there
-                is_reachable = self.planner.is_pose_reachable_by_robot(left_pose)
+            # NOTE that we use right hand for left pose and left hand for right
+            # pose. Baxter's left arm is closer to user's right hand and vice
+            # versa.
+            if self.pose_is_reachable(left_pose, "right"):
+                self.take_money_from_customer(left_pose,
+                                              self.planner.right_arm)
 
-                if is_reachable:
-                    pose = left_pose
+            elif self.pose_is_reachable(right_pose, "left"):
+                self.take_money_from_customer(right_pose,
+                                              self.planner.left_arm)
 
-            # If the right pose is not empty (i.e a user is there) and left hand didn't work
-            if not right_pose.is_empty() and not is_reachable:
-                # Verify that Baxter can move there
-                is_reachable = self.planner.is_pose_reachable_by_robot(right_pose)
-
-                if is_reachable:
-                    pose = right_pose
-
-            # If we found a reachable pose
-            if is_reachable:
-                if self.amount_due < 0:  # Baxter owns money
-                    self.give_money_to_customer(pose)
-                else:  # Customer owns money
-                    self.take_money_from_customer(pose)
             else:
                 print "Wasn't able to move hand to goal position"
 
-    def take_money_from_customer(self, pose):
-        self.planner.move_to_position(pose)
+    def pose_is_reachable(self, pose, side):
+        arm = self.planner.left_arm if side == "left" else self.planner.right_arm
 
-        time.sleep(5)
+        if not pose.is_empty():
+            # Verify that Baxter can move there
+            is_reachable = self.planner.is_pose_reachable_by_arm(pose, arm)
+            return is_reachable
+
+        return False
+
+    def take_money_from_customer(self, pose, arm):
+        self.planner.move_to_position(pose, arm)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
-
-        time.sleep(1)
-
+        rospy.sleep(1)
         self.planner.close_gripper()
-
-        time.sleep(5)
+        rospy.sleep(1)
 
         # Moves Baxter hand to head
         self.planner.move_hand_to_head_camera()
 
-        recognised_banknote = self.get_banknote_value()
+        # Here show Baxter's eyes moving to show that the robot is not stuck
+        # but is instead "thinking" (because eyes are moving)
+        self.run_nonblocking(self.make_eyes_animated_reading_banknote)
 
-        if recognised_banknote != -1:
-            print "Received: " + str(recognised_banknote)
+        # Start reading the banknote value
+        banknote_value = self.get_banknote_value()
+
+        if banknote_value != -1:
+            # Show image of the recognised banknote.
+            image = "five_bill_recognised.png" if banknote_value == 5 else "one_bill_recognised.png"
+            self.show_image_to_baxters_head_screen(image)
 
             # Since we detected amount, subtract the value from the own amount
-            self.amount_due -= int(recognised_banknote)
-            # TODO: Put the banknote to the table
+            self.amount_due -= int(banknote_value)
+            self.customer_last_pose = (pose, arm)
+            self.planner.leave_banknote_to_the_table()
+            rospy.sleep(1)
         else:
-            print "Unable to recognise banknote"
+            self.show_image_to_baxters_head_screen("unable_to_recognise.png")
 
+        self.show_eyes_normal()
         self.planner.set_neutral_position_of_limb()
 
     def get_banknote_value(self):
@@ -164,7 +284,8 @@ class Shopkeeper:
 
         try:
             # Handle for calling the service
-            recognise_banknote = rospy.ServiceProxy('recognise_banknote', RecogniseBanknote)
+            recognise_banknote = rospy.ServiceProxy('recognise_banknote',
+                                                    RecogniseBanknote)
 
             # Use the handle as any other normal function
             value = recognise_banknote(camera_topic=self._money_recognition_camera_topic)
@@ -179,25 +300,74 @@ class Shopkeeper:
 
         return None
 
-    def give_money_to_customer(self, pose):
-        if self.amount_due <= -5:
-            money_to_give_back = 5
-            self.take_a_five_banknote()
-        elif self.amount_due >= -4:
-            money_to_give_back = 1
-            self.take_a_one_banknote()
+    def run_nonblocking(self, function):
+        thread = threading.Thread(target=function)
+        thread.start()
 
-        self.planner.move_to_position(pose)
+    def make_eyes_animated_reading_banknote(self):
+        self.show_eyes_focusing()
+        self.show_eyes_focusing_right()
+        self.show_eyes_focusing_left()
+        self.show_eyes_focusing_right()
+        self.show_eyes_focusing_left()
+
+    def show_eyes_normal(self):
+        self.show_image_to_baxters_head_screen("normal_eyes.png")
+
+    def show_eyes_focusing(self):
+        self.show_image_to_baxters_head_screen("looking_eyes.png")
+
+    def show_eyes_focusing_left(self):
+        self.show_image_to_baxters_head_screen("looking_left_eyes.png")
+
+    def show_eyes_focusing_right(self):
+        self.show_image_to_baxters_head_screen("looking_right_eyes.png")
+
+    def show_image_to_baxters_head_screen(self, image_path):
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('baxter_cashier_manipulation') + "/img/" + image_path
+        img = cv2.imread(path)
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
+
+        pub = rospy.Publisher('/robot/xdisplay', Image, latch=True, queue_size=20)
+        pub.publish(msg)
+        # Sleep to allow for image to be published
+        rospy.sleep(1)
+
+    def pick_banknote_from_table(self, arm):
+        # TODO: Make sure that this won't happen again by passing the arm in gripper open/close
+        self.planner.active_hand = arm
+        self.planner.open_gripper()
+        pose = None
+
+        if arm.is_left():
+            banknote = self.banknotes_table_left.get_next_available_banknote()
+        elif arm.is_right():
+            banknote = self.banknotes_table_right.get_next_available_banknote()
+
+        if banknote is not None:
+            self.planner.move_to_position(banknote.pose, arm)
+            rospy.sleep(1)
+            self.planner.close_gripper()
+            self.planner.set_neutral_position_of_limb()
+        else:
+            print "No available banknotes on the table..."
+
+    def give_money_to_customer(self):
+        customer_hand_pose, baxter_arm = self.customer_last_pose
+        money_to_give_back = 1
+
+        self.pick_banknote_from_table(baxter_arm)
+        self.planner.move_to_position(customer_hand_pose,
+                                      baxter_arm)
 
         # Waiting user to reach the robot to get the money
-        time.sleep(2)
-
+        rospy.sleep(2)
         self.planner.open_gripper()
         self.amount_due += money_to_give_back
 
-    # def get_list_of_users(self):
-    #     master = rosgraph.masterapi.Master('/camera_depth_optical_frame')
-    #     print master.getPublishedTopics('/cob_body_tracker')
+        if self.amount_due >= 0:
+            self.planner.set_neutral_position_of_limb()
 
     def get_pose_from_space(self):
         '''
@@ -211,8 +381,11 @@ class Shopkeeper:
             get_user_pose = rospy.ServiceProxy('get_user_pose', GetUserPose)
 
             # Use the handle as any other normal function
-            left_hand = get_user_pose(user_number=1, body_part='left_hand')
-            right_hand = get_user_pose(user_number=1, body_part='right_hand')
+            # IMPORTANT: Note that for some reason the Skeelton Tracker library,
+            # identifies the left hand as the right and the right as left,
+            # hence an easy and quick fix was to request the opposite hand here.
+            left_hand = get_user_pose(user_number=1, body_part='right_hand')
+            right_hand = get_user_pose(user_number=1, body_part='left_hand')
         except rospy.ServiceException, e:
             print "Service call failed: %s" % e
 
@@ -229,7 +402,6 @@ class Shopkeeper:
 
 if __name__ == '__main__':
     baxter = Shopkeeper()
-    # baxter.get_list_of_users()
 
     while True:
         baxter.interact()
