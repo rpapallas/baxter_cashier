@@ -34,32 +34,25 @@ class BanknoteRecogniser:
         self._RATE = rospy.Rate(0.3)
 
     def detect(self, request):
-        found = -1
         timeout_start = time.time()
         timeout = 5   # [seconds]
 
-        while found is None or (time.time() < timeout_start + timeout):
+        while time.time() < timeout_start + timeout:
             try:
-                (transformation, _) = self._listener.lookupTransform("base",
-                                                                     "ar_marker_5",
-                                                                     rospy.Time(0))
-                found = 5
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException) as e:
+                _ = self._listener.lookupTransform("base", "ar_marker_5", rospy.Time(0))
+                return RecogniseBanknoteResponse(5)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
                 print e
 
             try:
-                (transformation, _) = self._listener.lookupTransform("base",
-                                                                     "ar_marker_1",
-                                                                     rospy.Time(0))
-                found = 1
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException) as e:
+                _ = self._listener.lookupTransform("base", "ar_marker_1", rospy.Time(0))
+                return RecogniseBanknoteResponse(1)
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
                 print e
 
             self._RATE.sleep()
 
-        return RecogniseBanknoteResponse(found)
+        return RecogniseBanknoteResponse(-1)
 
 
 if __name__ == '__main__':
