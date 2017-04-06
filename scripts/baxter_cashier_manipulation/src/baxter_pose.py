@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas
+    Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,22 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from geometry_msgs.msg import (
-    PoseStamped,
-    Pose,
-    Point,
-    Quaternion,
-)
-
-from std_msgs.msg import Header
-import rospy
+# System-wide imports
 import time
 
+# ROS-wide imports
+import rospy
+from geometry_msgs.msg import (PoseStamped, Pose, Point, Quaternion,)
+from std_msgs.msg import Header
+
+
 class BaxterPose:
-    """Represents a pose that can be used in IK Solvers to solve."""
+    """Represents a pose."""
 
     def __init__(self, x1, y1, z1, x2, y2, z3, w):
-        """ Initialise the class with the given attributes """
+        """Initialise the class with the given attributes."""
         self.transformation_x = x1
         self.transformation_y = y1
         self.transformation_z = z1
@@ -44,7 +42,7 @@ class BaxterPose:
         self.created = time.time()
 
     def __str__(self):
-        """String representation of the pose"""
+        """String representation of the pose."""
         return "{} {} {} {} {} {} {}".format(self.transformation_x,
                                              self.transformation_y,
                                              self.transformation_z,
@@ -54,6 +52,7 @@ class BaxterPose:
                                              self.rotation_w)
 
     def _get_position_and_orientation(self):
+        """Will return the position and orientation of the pose."""
         position = Point(self.transformation_x,
                          self.transformation_y,
                          self.transformation_z)
@@ -66,18 +65,19 @@ class BaxterPose:
         return position, orientation
 
     def get_pose(self):
-        """ Returns a Pose object """
+        """Will return a Pose object."""
         position, orientation = self._get_position_and_orientation()
         return Pose(position=position, orientation=orientation)
 
     def get_pose_stamped(self):
+        """Will return a pose stamped object of the pose."""
         pose = self.get_pose()
         header = Header(stamp=rospy.Time.now(), frame_id='base')
 
         return PoseStamped(header=header, pose=pose)
 
     def is_empty(self):
-        """Checks if the pose is empty (all attributes zeroes)"""
+        """Will check if the pose is empty (all attributes zeroes)."""
         value = [self.transformation_x,
                  self.transformation_y,
                  self.transformation_z,
