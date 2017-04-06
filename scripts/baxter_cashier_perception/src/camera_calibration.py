@@ -1,6 +1,13 @@
 #!/usr/bin/python
-
 """
+Image Calibrator tool.
+
+This script implements the Camera Calibrator tool. The purpose of this tool
+is to align the camera view relative to Baxter's base.
+
+Since Baxter will be far away from the RGB-D camera, this script will allow the
+user through a User Interface to aligh the two.
+
     Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas
 
 This program is free software: you can redistribute it and/or modify
@@ -19,12 +26,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Python specific imports
 import argparse
-import sys
 import os
 from os.path import isfile
 from os.path import join
 from os.path import expanduser
-import argparse
 
 # ROS specific imports
 import rospy
@@ -40,10 +45,11 @@ class BasicDatabase:
 
     def __init__(self):
         """
+        Default constructor.
+
         Default constructor to setup the directory to store and load the
         values.
         """
-
         # Path where script will store the files
         path = expanduser("~") + "/baxter_cashier_calibrator_files/"
         self.file_save_directory = path
@@ -54,6 +60,8 @@ class BasicDatabase:
 
     def get_available_files(self):
         """
+        Will return a list of available files.
+
         Returns a list of available files in the directory. This includes only
         files and not sub-directories. The usage of this function is to show
         to the user a possible number of fils to choose from to load values.
@@ -65,6 +73,8 @@ class BasicDatabase:
 
     def load_values(self, file_name):
         """
+        Will load the values from file.
+
         Given a file name, this method will load the values from the file and
         will return xyz and rpy values.
         """
@@ -84,8 +94,7 @@ class BasicDatabase:
         return xyz, rpy
 
     def save_values_to_file(self, file_name, xyz, rpy):
-        """This method will store the xyz and rpy values to file."""
-
+        """Will store the xyz and rpy values to file."""
         full_file_path = join(self.file_save_directory, file_name)
         store_values_file = open(full_file_path, "w")
 
@@ -155,7 +164,8 @@ class Calibrator:
         # Ask for file name to store the new values for this session
         if self.file_name is None or not self.load_from_file:
             if self.file_name is None:
-                print "No files found to load. Starting a new configuration..."
+                print("No files found to load. Starting a new \
+                      configuration...")
 
             # Ask for new file name
             message = "Enter a new file name to save configuration: "
@@ -169,18 +179,21 @@ class Calibrator:
 
     def _get_file_name_from_user(self):
         """
+        Will ask the user for file to load.
+
         Asks from the user to choose a file from a list of possible files found
         in the directory. The user should enter a number from that list
         starting from zero.
         """
         list_of_files = self.database.get_available_files()
 
-        if list_of_files is None: return
+        if list_of_files is None:
+            return
 
-        print "Available files:"
+        print("Available files:")
 
         for i in range(0, len(list_of_files)):
-            print "{}. {}".format(i, list_of_files[i])
+            print("{}. {}".format(i, list_of_files[i]))
 
         file_number = int(raw_input("Enter file number from the list: "))
 
@@ -191,6 +204,8 @@ class Calibrator:
 
     def _create_trackbars_for_window(self):
         """
+        Will create the OpenCV window.
+
         Called only once to initialise and created the OpenCV window with
         the trackbars. The values of trackbars will be set to 0 if not loading
         from file, or will be set to the last used values if loaded from file.
@@ -210,6 +225,8 @@ class Calibrator:
 
     def calculate_values(self):
         """
+        Calculate the new values based on the slider values.
+
         When xyz and rpy values are given from the user, some formulas needs to
         be applied to get the xyz corrected and the quaternion value.
         """
@@ -230,6 +247,8 @@ class Calibrator:
 
     def _callback(self, _):
         """
+        Callback function on slider change.
+
         This callback function is called whenever the trackbars from the OpenCV
         window are changed.
         """
@@ -244,8 +263,7 @@ class Calibrator:
         self.database.save_values_to_file(self.file_name, self.xyz, self.rpy)
 
     def _extract_xyz_from_trackbars(self):
-        """Extracts x, y and z values from CV2 trackbars."""
-
+        """Will extract x, y and z values from CV2 trackbars."""
         x = self.cv2.getTrackbarPos('x', 'image')
         y = self.cv2.getTrackbarPos('y', 'image')
         z = self.cv2.getTrackbarPos('z', 'image')
@@ -253,8 +271,7 @@ class Calibrator:
         return [x, y, z]
 
     def _extract_rpy_from_trackbars(self):
-        """Extracts r, p and y values from CV2 trackbars."""
-
+        """Will extract r, p and y values from CV2 trackbars."""
         r = self.cv2.getTrackbarPos('Roll', 'image')
         p = self.cv2.getTrackbarPos('Pitch', 'image')
         y = self.cv2.getTrackbarPos('Yaw', 'image')
@@ -263,11 +280,9 @@ class Calibrator:
 
     def calibrate(self):
         """Method performs the basic operation."""
-        print "Start publishing tf..."
+        print("Start publishing tf...")
 
         while not rospy.is_shutdown():
-            img = np.zeros((300, 512, 3), np.uint8)
-            self.cv2.imshow('image', img)
             _ = self.cv2.waitKey(1) & 0xFF
 
             self.broadcaster.sendTransform(tuple(self.xyz_transformed),
