@@ -120,7 +120,7 @@ class BanknotesOnTable:
             self.banknotes.append(new_pose)
 
 
-class Shopkeeper:
+class Cashier:
     """
     Main script that put everything together.
 
@@ -207,7 +207,7 @@ class Shopkeeper:
 
         return banknotes_on_table
 
-    def interact(self):
+    def interact_with_customer(self):
         """
         Main interaction logic.
 
@@ -474,7 +474,7 @@ class Shopkeeper:
 
 
 if __name__ == '__main__':
-    baxter = Shopkeeper()
+    cashier = Cashier()
 
     while True:
-        baxter.interact()
+        cashier.interact_with_customer()
