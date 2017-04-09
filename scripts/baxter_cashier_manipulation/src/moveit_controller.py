@@ -4,7 +4,7 @@ MoveIt! Controller.
 
 This  controller  bridge  MoveIt  with Rviz and Baxter as well as it provide an
 interface  to interact  with  Baxter  through Moveit to  the project, and  more
-specifically to shopkeeper.py
+specifically to cashier.py
 
     Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas
 
@@ -101,7 +101,7 @@ class MoveItArm:
 
 
 class MoveItPlanner:
-    """Will configure and initialise MoveIt to be used in shopkeeper.py."""
+    """Will configure and initialise MoveIt to be used in cashier.py."""
 
     def __init__(self):
         """Initialise the arms of Baxter and setup environment obstacles."""
