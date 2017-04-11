@@ -132,7 +132,6 @@ class Cashier:
     def __init__(self):
         """Default constructor that setup the environemnt."""
         # Initialisation
-        rospy.init_node("baxter_cashier")
         rs = baxter_interface.RobotEnable(CHECK_VERSION)
         init_state = rs.state().enabled
         rs.enable()
@@ -150,6 +149,8 @@ class Cashier:
 
         self.banknotes_table_left = self.set_banknotes_on_table(side="left")
         self.banknotes_table_right = self.set_banknotes_on_table(side="right")
+
+        self.banknote_recognition_task_completed = False
 
     def set_banknotes_on_table(self, side):
         """
@@ -319,6 +320,8 @@ class Cashier:
         This will either return a correct amount like 1 or 5 but also -1 if
         nothing detected.
         """
+        self.banknote_recognition_task_completed = False
+
         # This method blocks until the service 'get_user_pose' is available
         rospy.wait_for_service('recognise_banknote')
 
@@ -329,10 +332,12 @@ class Cashier:
 
             # Use the handle as any other normal function
             value = recognise_banknote(self._money_recognition_camera_topic)
+            self.banknote_recognition_task_completed = True
             return value.banknote_amount
         except rospy.ServiceException as e:
             print("Service call failed: %s" % e)
 
+        self.banknote_recognition_task_completed = True
         return None
 
     def run_nonblocking(self, function):
@@ -348,11 +353,15 @@ class Cashier:
 
     def make_eyes_animated_reading_banknote(self):
         """Will create the illusion that the eyes are moving."""
-        self.show_eyes_focusing()
-        self.show_eyes_focusing_right()
-        self.show_eyes_focusing_left()
-        self.show_eyes_focusing_right()
-        self.show_eyes_focusing_left()
+        funcs = [self.show_eyes_focusing,
+                      self.show_eyes_focusing_right,
+                      self.show_eyes_focusing_left,
+                      self.show_eyes_focusing_right,
+                      self.show_eyes_focusing_left]
+
+        for func in funcs:
+            if self.banknote_recognition_task_completed == False:
+                func()
 
     def show_eyes_normal(self):
         """Will show normal eyes to Baxter's screen."""
@@ -474,6 +483,7 @@ class Cashier:
 
 
 if __name__ == '__main__':
+    rospy.init_node("baxter_cashier")
     cashier = Cashier()
 
     while True:
