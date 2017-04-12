@@ -249,26 +249,7 @@ class MoveItPlanner:
 
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
-        left_config = {'left_w0': -0.231247603774,
-                       'left_w1': 1.33724775184,
-                       'left_w2': -2.79491299553,
-                       'left_e0': -0.0908883616822,
-                       'left_e1': 1.29813124175,
-                       'left_s0': -0.154548564379,
-                       'left_s1': -1.29391279458}
-
-        right_config = {'right_s0': -0.130004871773,
-                        'right_s1': -1.17464578832,
-                        'right_w0': 0.0901213712883,
-                        'right_w1': 1.17196132194,
-                        'right_w2': -0.0766990393943,
-                        'right_e0': 0.647339892488,
-                        'right_e1': 1.49601476339}
-
-        config = left_config if self.active_hand.is_left() else right_config
-        self.active_hand.limb.set_joint_value_target(config)
-        self.active_hand.limb.plan()
-        self.active_hand.limb.go(wait=True)
+        self.active_hand._limb.move_to_neutral()
 
     def get_end_effector_current_pose(self, side_name):
         """

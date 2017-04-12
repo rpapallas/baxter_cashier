@@ -234,6 +234,7 @@ class Cashier:
 
         # Do this while customer own money or baxter owns money
         while self.amount_due != 0:
+            print self.amount_due
 
             # If the amount due is negative, Baxter owns money
             if self.amount_due < 0:
