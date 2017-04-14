@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
 <package>
   <name>baxter_cashier_perception</name>
-  <version>0.0.0</version>
-  <description>The baxter_cashier_perception package</description>
+  <version>1.0.0</version>
+  <description>
+    The baxter_cashier_perception package contains very important services
+    like the banknote recognition and hand-pose detector services as well
+    as the calibration tool that is used to align the camera with the
+    robot's base.
+  </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
   <maintainer email="sc13rp@leeds.ac.uk">Rafael Papallas</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>Copyright (C) 2016-2017 - The University of Leeds and Rafael Papallas</license>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
