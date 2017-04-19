@@ -176,8 +176,8 @@ class RoboticsLabEnvironment(Environment):
         self._obstacles.append(table)
 
         camera_tripod = Obstacle(obstalce_name="camera_tripod",
-                                               x=0.8,
-                                               y=-1,
+                                               x=0.6,
+                                               y=-1.2,
                                                z=-0.54,
                                                shape_size=(1, 0.3, 1.8))
 
