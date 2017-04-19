@@ -201,7 +201,7 @@ class MoveItPlanner:
 
         # Move Baxter's hand there.
         self.active_hand.limb.set_joint_value_target(config)
-        self.active_hand.limb.plan()
+        # self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
     def move_to_position(self, baxter_pose, arm):
@@ -210,7 +210,7 @@ class MoveItPlanner:
             self.active_hand = arm
             self.active_hand.limb.clear_pose_targets()
             self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
-            self.active_hand.limb.plan()
+            # self.active_hand.limb.plan()
 
             self.active_hand.limb.go(wait=True)
 
@@ -249,7 +249,25 @@ class MoveItPlanner:
 
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
-        self.active_hand._limb.move_to_neutral()
+        left_configuration = {'left_s0': 0.0,
+                                           'left_s1': -0.55,
+                                           'left_e0': 0.0,
+                                           'left_e1': 0.75,
+                                           'left_w0': 0.0,
+                                           'left_w1': 1.26,
+                                           'left_w2': 0.0}
+
+        right_configuration = {'right_s0': 0.0,
+                                             'right_s1': -0.55,
+                                             'right_e0': 0.0,
+                                             'right_e1': 0.75,
+                                             'right_w0': 0.0,
+                                             'right_w1': 1.26,
+                                             'right_w2': 0.0}
+        config = left_configuration if self.active_hand.is_left() else right_configuration
+        self.active_hand.limb.set_joint_value_target(config)
+        # self.active_hand.limb.plan()
+        self.active_hand.limb.go(wait=True)
 
     def get_end_effector_current_pose(self, side_name):
         """
