@@ -10,22 +10,20 @@ from moveit_commander import MoveGroupCommander
 
 rospy.init_node('move_group_python_interface', anonymous=True)
 
-# MoveIt!
+# MoveIt! Configuration
 limb = MoveGroupCommander("left_arm")
 limb.set_end_effector_link("left_gripper")
 limb.set_planner_id("RRTConnectkConfigDefault")
 limb.set_goal_position_tolerance(0.01)
 limb.set_goal_orientation_tolerance(0.01)
 scene = moveit_commander.PlanningSceneInterface()
-publisher = rospy.Publisher('/move_group/display_planned_path',
-                            moveit_msgs.msg.DisplayTrajectory,
-                            queue_size=30)
+# publisher = rospy.Publisher('/move_group/display_planned_path',
+#                             moveit_msgs.msg.DisplayTrajectory,
+#                             queue_size=30)
 
-# Baxter's default planner
+# Baxter's default planner configuraiton
 _limb = Limb("left")
 gripper = Gripper("left", CHECK_VERSION)
-gripper.open(block=True)
-gripper.close(block=True)
 
 # Move left hand to head camera - MOVEIT
 left_hand = {'left_w0': 2.64343239272,
