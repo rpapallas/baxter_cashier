@@ -186,23 +186,6 @@ class MoveItPlanner:
             obstacle.set_frame_id(self.robot.get_planning_frame())
             self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
 
-    def is_pose_reachable_by_arm(self, baxter_pose, arm):
-        """
-        Will find out if the arm can reach the pose.
-
-        Given a pose and Baxter's arm will check if the planner can find a plan
-        to move the arm to the pose.
-
-        Will return True if it does, false otherwise.
-        """
-        if not self.is_pose_within_reachable_area(baxter_pose):
-            return False
-
-        arm.limb.set_pose_target(baxter_pose.get_pose())
-        plan = arm.limb.plan()
-
-        return False if plan.joint_trajectory.points == [] else True
-
     def move_hand_to_head_camera(self):
         """Will move Baxter's active hand to head."""
         if self.active_hand is None:
@@ -236,13 +219,10 @@ class MoveItPlanner:
 
     def move_to_position(self, baxter_pose, arm):
         """Will move Baxter hand to the pose."""
-        if self.is_pose_reachable_by_arm(baxter_pose, arm):
-            self.active_hand = arm
-            self.active_hand.limb.clear_pose_targets()
-            self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
-            # self.active_hand.limb.plan()
-
-            self.active_hand.limb.go(wait=True)
+        self.active_hand = arm
+        self.active_hand.limb.clear_pose_targets()
+        self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
+        self.active_hand.limb.go(wait=True)
 
     def leave_banknote_to_the_table(self):
         """
