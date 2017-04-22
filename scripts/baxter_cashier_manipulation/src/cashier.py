@@ -251,27 +251,21 @@ class Cashier:
             # NOTE that we use right hand for left pose and left hand for right
             # pose. Baxter's left arm is closer to user's right hand and vice
             # versa.
-            if self.pose_is_reachable(left_pose, "right"):
+            if self.pose_is_reachable(left_pose):
                 self.take_money_from_customer(left_pose,
                                               self.planner.right_arm)
 
-            elif self.pose_is_reachable(right_pose, "left"):
+            elif self.pose_is_reachable(right_pose):
                 self.take_money_from_customer(right_pose,
                                               self.planner.left_arm)
-
             else:
                 print("Wasn't able to move hand to goal position")
 
-    def pose_is_reachable(self, pose, side):
+    def pose_is_reachable(self, pose):
         """Will check whether the given pose is reachable."""
-        arm = self.planner.right_arm
-
-        if side == "left":
-            arm = self.planner.left_arm
-
         if not pose.is_empty():
             # Verify that Baxter can move there
-            is_reachable = self.planner.is_pose_reachable_by_arm(pose, arm)
+            is_reachable = self.planner.is_pose_within_reachable_area(pose)
             return is_reachable
 
         return False
