@@ -53,17 +53,17 @@ class EnvironmentFactory:
     class used in other scripts to generate the class environments required.
     """
 
-    __robotics_lab_environment = None
+    _robotics_lab_environment = None
 
     @staticmethod
     def initialize():
         """Initialise each environment."""
-        EnvironmentFactory.__robotics_lab_environment = RoboticsLabEnvironment()
+        EnvironmentFactory._robotics_lab_environment = RoboticsLabEnvironment()
 
     @staticmethod
     def get_robotics_lab_environment():
         """Will return the robotics lab environment."""
-        return EnvironmentFactory.__robotics_lab_environment.clone()
+        return EnvironmentFactory._robotics_lab_environment.clone()
 
 
 class Obstacle:
@@ -82,10 +82,14 @@ class Obstacle:
 
         # The pose of where the obstacle is
         self.pose = PoseStamped()
-        self.pose.header.frame_id = None
         self.pose.pose.position.x = x
         self.pose.pose.position.y = y
         self.pose.pose.position.z = z
+
+        # Pose Header Frame ID is None because it needs to be set for the
+        # specific scene, which is not available at the time the obstacle
+        # is created.
+        self.pose.header.frame_id = None
 
         # This is a triple tuple (h, w, z) representing the size of the
         # obstacle
@@ -172,8 +176,8 @@ class RoboticsLabEnvironment(Environment):
         self._obstacles.append(table)
 
         camera_tripod = Obstacle(obstalce_name="camera_tripod",
-                                               x=0.8,
-                                               y=-1,
+                                               x=0.6,
+                                               y=-1.2,
                                                z=-0.54,
                                                shape_size=(1, 0.3, 1.8))
 
