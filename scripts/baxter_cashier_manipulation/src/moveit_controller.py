@@ -4,7 +4,7 @@ MoveIt! Controller.
 
 This  controller  bridge  MoveIt  with Rviz and Baxter as well as it provide an
 interface  to interact  with  Baxter  through Moveit to  the project, and  more
-specifically to shopkeeper.py
+specifically to cashier.py
 
     Copyright (C)  2016/2017 The University of Leeds and Rafael Papallas
 
@@ -22,7 +22,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# System-wide imports
 import sys
+
+# ROS and Baxter specific imports
 import rospy
 from baxter_interface import Gripper, Limb
 from baxter_interface import CHECK_VERSION
@@ -52,13 +55,17 @@ class MoveItArm:
         # This is the reference to Baxter's arm.
         self.limb = MoveGroupCommander("{}_arm".format(side_name))
         self.limb.set_end_effector_link("{}_gripper".format(side_name))
+
+        # Unfortunetly, MoveIt was not able to make the gripper work, neither
+        # did was able to find a very good pose using Forward Kinematics,
+        # so instead the Baxter SDK is used here to do these two jobs.
         self.gripper = Gripper(side_name, CHECK_VERSION)
         self._limb = Limb(side_name)
 
         # This solver seems to be better for finding solution among obstacles
         self.limb.set_planner_id("RRTConnectkConfigDefault")
 
-        # Error tollerance
+        # Error tollerance should be as low as possible for better accuracy.
         self.limb.set_goal_position_tolerance(0.01)
         self.limb.set_goal_orientation_tolerance(0.01)
 
@@ -82,15 +89,19 @@ class MoveItArm:
 
     def open_gripper(self):
         """Will open Baxter's gripper on his active hand."""
+        # Block ensures that the function does not return until the operation
+        # is completed.
         self.gripper.open(block=True)
 
     def close_gripper(self):
         """Will close Baxter's gripper on his active hand."""
+        # Block ensures that the function does not return until the operation
+        # is completed.
         self.gripper.close(block=True)
 
 
 class MoveItPlanner:
-    """Will configure and initialise MoveIt to be used in shopkeeper.py."""
+    """Will configure and initialise MoveIt to be used in cashier.py."""
 
     def __init__(self):
         """Initialise the arms of Baxter and setup environment obstacles."""
@@ -102,9 +113,9 @@ class MoveItPlanner:
         self.right_arm = MoveItArm("right")
 
         # Active hand is  used to  keep a state of  which hand  has recently be
-        # moved  from the  planenr. For  example, a  user send  request to this
+        # moved  from the  planner. For  example, a  user send  request to this
         # script to reach a pose, the algorithms in  this script will determine
-        # how to move  there but is not the user t hat will specify which hand,
+        # how to move  there but is not the user that will specify which hand,
         # the algorithm here will try both and find which one, hence by keeping
         # an active hand, we are able to use  it for other operaitons like open
         # and close of the gripper on that hand.
@@ -190,21 +201,16 @@ class MoveItPlanner:
 
         # Move Baxter's hand there.
         self.active_hand.limb.set_joint_value_target(config)
-        self.active_hand.limb.plan()
+        # self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
     def move_to_position(self, baxter_pose, arm):
-        """
-        Will move Baxter hand to the pose.
-
-        Note that the Baxter's arm that  will be used to move is not specified.
-        The  algorithm  will  try  both  and  plan  the  first  one to succeed.
-        """
+        """Will move Baxter hand to the pose."""
         if self.is_pose_reachable_by_arm(baxter_pose, arm):
             self.active_hand = arm
             self.active_hand.limb.clear_pose_targets()
             self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
-            self.active_hand.limb.plan()
+            # self.active_hand.limb.plan()
 
             self.active_hand.limb.go(wait=True)
 
@@ -243,25 +249,24 @@ class MoveItPlanner:
 
     def set_neutral_position_of_limb(self):
         """Will moves Baxter arm to neutral position."""
-        left_config = {'left_w0': -0.231247603774,
-                       'left_w1': 1.33724775184,
-                       'left_w2': -2.79491299553,
-                       'left_e0': -0.0908883616822,
-                       'left_e1': 1.29813124175,
-                       'left_s0': -0.154548564379,
-                       'left_s1': -1.29391279458}
+        left_configuration = {'left_s0': 0.0,
+                                           'left_s1': -0.55,
+                                           'left_e0': 0.0,
+                                           'left_e1': 0.75,
+                                           'left_w0': 0.0,
+                                           'left_w1': 1.26,
+                                           'left_w2': 0.0}
 
-        right_config = {'right_s0': -0.130004871773,
-                        'right_s1': -1.17464578832,
-                        'right_w0': 0.0901213712883,
-                        'right_w1': 1.17196132194,
-                        'right_w2': -0.0766990393943,
-                        'right_e0': 0.647339892488,
-                        'right_e1': 1.49601476339}
-
-        config = left_config if self.active_hand.is_left() else right_config
+        right_configuration = {'right_s0': 0.0,
+                                             'right_s1': -0.55,
+                                             'right_e0': 0.0,
+                                             'right_e1': 0.75,
+                                             'right_w0': 0.0,
+                                             'right_w1': 1.26,
+                                             'right_w2': 0.0}
+        config = left_configuration if self.active_hand.is_left() else right_configuration
         self.active_hand.limb.set_joint_value_target(config)
-        self.active_hand.limb.plan()
+        # self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
 
     def get_end_effector_current_pose(self, side_name):
@@ -277,7 +282,11 @@ class MoveItPlanner:
         x, y, z = [position.x, position.y, position.z]
 
         orientation = pose["orientation"]
-        x2, y2, z2, w = [orientation.x, orientation.y, orientation.z, orientation.w]
+        x2, y2, z2, w = [orientation.x,
+                         orientation.y,
+                         orientation.z,
+                         orientation.w]
+
         return BaxterPose(x, y, z, x2, y2, z2, w)
 
     def open_gripper(self):
@@ -293,6 +302,6 @@ if __name__ == '__main__':
     rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
     planner = MoveItPlanner()
 
-    print planner.get_end_effector_current_pose("right")
+    # Command to test here
 
     moveit_commander.os._exit(0)

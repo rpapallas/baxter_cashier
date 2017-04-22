@@ -1,19 +1,23 @@
 <?xml version="1.0"?>
 <package>
   <name>baxter_cashier_manipulation</name>
-  <version>0.0.0</version>
-  <description>The baxter_cashier_manipulation package</description>
+  <version>1.0.0</version>
+  <description>
+    The baxter_cashier_manipulation package contains the important scripts
+    of the project. Mainly in this package are located the main script
+    that will do the main interaction and connect pieces together, but
+    also the MoveIt controller which is a custom made interface to use
+    MoveIt with the main script.
+  </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
-  <!-- Example:  -->
-  <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="rafael@todo.todo">rafael</maintainer>
+  <maintainer email="sc13rp@leeds.ac.uk">Rafael Papallas</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
-  <license>TODO</license>
+  <license>Copyright (C) 2016-2017 - The University of Leeds and Rafael Papallas</license>
 
 
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->

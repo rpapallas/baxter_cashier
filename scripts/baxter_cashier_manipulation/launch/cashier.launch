@@ -34,5 +34,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <!-- =================================================================== -->
 
     <!-- Run the main script for the Baxter Cashier -->
-    <node pkg="baxter_cashier_manipulation" type="shopkeeper.py" name="shopkeeper" output="screen"/>
+    <!-- <node pkg="baxter_cashier_manipulation" type="cashier.py" name="cashier" output="screen"/> -->
 </launch>

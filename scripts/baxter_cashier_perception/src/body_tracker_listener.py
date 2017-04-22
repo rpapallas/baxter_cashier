@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Body Tracker listener.
+
 This script acts as a listener to the Skeleton Tracker provided by the
 cob_people_perception library. It listens to a specific frame of the
 user's hand and returns the pose to the caller.
@@ -34,36 +36,54 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import roslib
-import os
+# System specific imports
+import time
+
+# ROS specific imports
 import rospy
 import tf
-import time
-import subprocess
-from baxter_cashier_manipulation.srv import *
+
+# Project specific imports
+from baxter_cashier_manipulation.srv import GetUserPose
+from baxter_cashier_manipulation.srv import GetUserPoseResponse
 
 
 class InvalidBodyPartException(Exception):
     """
+    Invalid Body Part Exception.
+
     Raises exception if the body part string provided by the user is
     not a valid one (i.e not provided by the skeleton tracker)
     """
+
     def __init__(self, value):
+        """Default constructor accepting the value given."""
         self.value = value
 
     def __str__(self):
+        """String representation of the exception."""
         return """ The provided body part {} is not a valid body part
                for the skeleton tracker.""".format(self.value)
 
 
 class BodyTrackerListener:
+    """
+    Body Tracker Listener class.
+
+    Will listen to the cob_openni2_tracker library for poses and will return
+    the pose on request.
+    """
+
     def __init__(self):
+        """Default constructor."""
         # General default configuration for the listener
         self._listener = tf.TransformListener()
         self._RATE = rospy.Rate(0.3)
 
     def _is_body_part_valid(self, body_part):
         """
+        Will check if body part is valid.
+
         Given a body_part will return true if the part is valid or
         false if is invalid.
         """
@@ -78,6 +98,8 @@ class BodyTrackerListener:
     # TODO: Consider refactoring the name of the method to make more sense.
     def start_listening_for(self, request):
         """
+        Will listen for request.
+
         Bridge method that starts the Skeleton Tracker, starts the process of
         listening to the pose and kill the skeleton tracker.
 
@@ -88,26 +110,23 @@ class BodyTrackerListener:
             try:
                 raise InvalidBodyPartException(request.body_part)
             except InvalidBodyPartException as e:
-                print e
+                print(e)
 
-        print "Server received: {} and {}".format(request.user_number,
-                                                  request.body_part)
-        print "Start listenning..."
+        print("Server received: {} and {}".format(request.user_number,
+                                                  request.body_part))
 
         tran, rot = self._listen(user_number=request.user_number,
                                  body_part=request.body_part)
-
-        print "Finished listenning."
 
         return GetUserPoseResponse(tran, rot)
 
     def pose_elimination(self, hand, elbow, shoulder):
         """
+        Will Eliminate invalid poses.
+
         This algorithm eliminates poses that are not in the hand-pose.
         """
         pass
-
-
 
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
@@ -117,24 +136,28 @@ class BodyTrackerListener:
         timeout_start = time.time()
         timeout = 5   # [seconds]
 
-        transformation = [0, 0, 0]
+        trans = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
         while time.time() < timeout_start + timeout:
             try:
                 # Try to listen for the transformation and rotation of the node
-                (transformation, _) = self._listener.lookupTransform(source,
-                                                                     target,
-                                                                     rospy.Time(0))
+                (trans, _) = self._listener.lookupTransform(source,
+                                                            target,
+                                                            rospy.Time(0))
 
-                rotation = [-0.513, 0.520, -0.499, 0.467] if body_part == "right_hand" else [0.559, -0.504, 0.480, -0.451]
+                rotation = [0.559, -0.504, 0.480, -0.451]
+
+                if body_part == "right_hand":
+                    rotation = [-0.513, 0.520, -0.499, 0.467]
+
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
-                print e
+                print(e)
 
             self._RATE.sleep()
 
-        return transformation, rotation
+        return trans, rotation
 
 
 if __name__ == '__main__':
