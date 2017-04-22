@@ -135,6 +135,9 @@ class MoveItPlanner:
                                          moveit_msgs.msg.DisplayTrajectory,
                                          queue_size=30)
 
+    def calculate_reachability_area(self):
+        
+
     def _create_scene(self):
         """
         Will setup and add obstacles to MoveIt! world.
@@ -156,6 +159,10 @@ class MoveItPlanner:
 
         # For each obstacle in the environment add it to the scene
         for obstacle in environment.get_obstacles():
+            # Keep the table obstacle to be used later for pose elimination
+            if obstacle.name == "table":
+                self.table_obstacle = obstacle
+
             obstacle.set_frame_id(self.robot.get_planning_frame())
             self.scene.add_box(obstacle.name, obstacle.pose, obstacle.size)
 
