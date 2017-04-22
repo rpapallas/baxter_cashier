@@ -135,8 +135,28 @@ class MoveItPlanner:
                                          moveit_msgs.msg.DisplayTrajectory,
                                          queue_size=30)
 
-    def calculate_reachability_area(self):
-        
+    def is_pose_within_reachable_area(self, pose):
+        point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.shape_size[0]
+        point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.shape_size[1]
+        lower_point_z = self.table_obstacle.pose.pose.position.z
+        upper_point_z = lower_point_z * (-1)
+
+        if upper_point_z == 0:
+            upper_point_z = 0.58
+            lower_point_z = -0.58
+
+        pose_x = pose.transformation_x
+        pose_y = pose.transformation_y
+        pose_z = pose.transformation_z
+
+        if pose_z < upper_point_z and pose_z >= lower_point_z:
+            if pose_y <= point_y and pose_x <= point_x:
+                print "Within reachable area!!!!!!"
+                return True
+
+        print "Not in reachable area"
+
+        return False
 
     def _create_scene(self):
         """
@@ -175,6 +195,9 @@ class MoveItPlanner:
 
         Will return True if it does, false otherwise.
         """
+        if not self.is_pose_within_reachable_area(baxter_pose):
+            return False
+
         arm.limb.set_pose_target(baxter_pose.get_pose())
         plan = arm.limb.plan()
 
