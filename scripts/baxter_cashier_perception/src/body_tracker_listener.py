@@ -136,11 +136,16 @@ class BodyTrackerListener:
         trans = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
-        number_of_consecutive_frames = 0
-        x1, y1, z1 = left_hand.transformation
+        number_of_consecutive_frames = 1
 
         while True:
             try:
+                if number_of_consecutive_frames == 1:
+                    # Calculate upper and lower bounds
+                    xs = map(lambda v: v + trans[0], [0.2, -0.2])
+                    ys = map(lambda v: v + trans[1], [0.2, -0.2])
+                    zs = map(lambda v: v + trans[2], [0.2, -0.2])
+
                 if number_of_consecutive_frames == 5:
                     break
 
@@ -148,17 +153,15 @@ class BodyTrackerListener:
                 (trans, _) = self._listener.lookupTransform(source,
                                                             target,
                                                             rospy.Time(0))
-
-                xs = map(lambda v: v + trans[0], [0, 0.2, -0.2])
-                ys = map(lambda v: v + trans[1], [0, 0.2, -0.2])
-                zs = map(lambda v: v + trans[0], [0, 0.2, -0.2])
-
+                
                 x, y, z = trans
 
-                if (x == xs[0] or x < xs[1] or x > xs[2]) and \
-                   (y == ys[0] or y < ys[1] or y > ys[2]) and \
-                   (z == zs[0] or z < zs[1] or z > zs[2]):
+                if (x <= xs[0] and x >= xs[1]) and \
+                   (y <= ys[0] and y >= ys[1]) and \
+                   (z <= zs[0] and z >= zs[1]):
                     number_of_consecutive_frames += 1
+                else:
+                    number_of_consecutive_frames = 1
 
                 print "Number of consecutive frames: " + str(number_of_consecutive_frames)
 
