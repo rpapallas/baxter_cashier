@@ -46,6 +46,51 @@ from baxter_pose import BaxterPose
 from moveit_controller import MoveItPlanner
 
 
+class ImageGenerator:
+    def __init__(self):
+        rospack = rospkg.RosPack()
+        path = rospack.get_path('baxter_cashier_manipulation')
+        full_path = cv2.imread(path + "/img/")
+
+        self.template_amount_due = cv2.imread(full_path + 'amount_due_template.png')
+        self.template_change_due = cv2.imread(full_path + 'change_due_template.png')
+        self.thank_you_image = cv2.imread(full_path + 'thank_you_message.png')
+
+        # Vertical banknotes
+        self.five_bill = cv2.imread(full_path + 'five_bill.png')
+        self.one_bill = cv2.imread(full_path + 'one_bill.png')
+
+        # Reise the banknotes to smaller so they can fit
+        self.five_bill = cv2.resize(self.five_bill, (100, 180))
+        self.one_bill = cv2.resize(self.one_bill, (100, 180))
+
+        self.font = cv2.FONT_HERSHEY_SIMPLEX
+        self.x_offset = 30
+        self.y_offset = 350
+
+    def generate_change_due(self, change_due):
+        if change_due == 0:
+            return self.thank_you_image
+
+        img = self.template_change_due
+        cv2.putText(img, str(change_due), (650, 323), self.font, 2, (0, 0, 0), 3)
+        return img
+
+    def generate_amount_due(self, amount_due, banknotes_given):
+        def get_image_from_number(number):
+            return self.five_bill if number == 5 else self.one_bill
+
+        img = self.template_amount_due
+        cv2.putText(img, str(amount_due), (650, 130), self.font, 2, (0, 0, 0), 3)
+
+        for number in banknotes_given:
+            banknote_image = get_image_from_number(number)
+            img[self.y_offset:self.y_offset+banknote_image.shape[0], self.x_offset:self.x_offset+banknote_image.shape[1]] = banknote_image
+            self.x_offset += 120
+
+        return img
+
+
 class Banknote:
     """This class represent a single banknote on the table."""
 
@@ -152,6 +197,9 @@ class Cashier:
 
         self.banknote_recognition_task_completed = False
 
+        self.banknotes_given = []
+        self.image_generator = ImageGenerator()
+
     def set_banknotes_on_table(self, side):
         """
         Will record and calculate the poses of the banknotes on the table.
@@ -226,6 +274,7 @@ class Cashier:
 
         # Make Baxter's screen eyes to shown normal
         self.show_eyes_normal()
+        self.banknotes_given = []
 
         # Since we have new iteration here, ensure that the position of the
         # banknotes on the table is reset to normal.
@@ -234,12 +283,16 @@ class Cashier:
 
         # Do this while customer own money or baxter owns money
         while self.amount_due != 0:
-            print self.amount_due
-
             # If the amount due is negative, Baxter owns money
             if self.amount_due < 0:
+                change_due_image = self.image_generator.generate_change_due(change_due=abs(self.amount_due))
+                self.show_image_to_baxters_head_screen(image_path=None, image=change_due_image)
                 self.give_money_to_customer()
                 continue
+
+            amount_due_image = self.image_generator.generate_amount_due(amount_due=self.amount_due,
+                                                                        banknotes_given=self.banknotes_given)
+            self.show_image_to_baxters_head_screen(image_path=None, image=amount_due_image)
 
             # Get the hand pose of customer's two hands.
             left_pose, right_pose = self.get_pose_from_space()
@@ -260,6 +313,10 @@ class Cashier:
                                               self.planner.left_arm)
             else:
                 print("Wasn't able to move hand to goal position")
+
+        thank_you_message_image = self.image_generator.generate_change_due(change_due=0)
+        self.show_image_to_baxters_head_screen(image_path=None, image=thank_you_message_image)
+        rospy.sleep(3)
 
     def pose_is_reachable(self, pose):
         """Will check whether the given pose is reachable."""
@@ -297,6 +354,8 @@ class Cashier:
                 image = "five_bill_recognised.png"
 
             self.show_image_to_baxters_head_screen(image)
+
+            self.banknotes_given.append(banknote_value)
 
             # Since we detected amount, subtract the value from the own amount
             self.amount_due -= int(banknote_value)
@@ -374,18 +433,23 @@ class Cashier:
         """Will show focusing eyes looking to right to Baxter's screen."""
         self.show_image_to_baxters_head_screen("looking_right_eyes.png")
 
-    def show_image_to_baxters_head_screen(self, image_path):
+    def show_image_to_baxters_head_screen(self, image_path, image=None):
         """Will show an image to Baxter's screen."""
-        rospack = rospkg.RosPack()
-        path = rospack.get_path('baxter_cashier_manipulation')
-        img = cv2.imread(path + "/img/" + image_path)
-        msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
+        if image_path:
+            rospack = rospkg.RosPack()
+            path = rospack.get_path('baxter_cashier_manipulation')
+            img = cv2.imread(path + "/img/" + image_path)
 
+        if image:
+            img = image
+
+        msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
         pub = rospy.Publisher('/robot/xdisplay',
                               Image,
                               latch=True,
                               queue_size=2)
         pub.publish(msg)
+
         # Sleep to allow for image to be published
         rospy.sleep(1)
 
