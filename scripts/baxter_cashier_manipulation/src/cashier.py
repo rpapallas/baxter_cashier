@@ -178,9 +178,9 @@ class Cashier:
     def __init__(self):
         """Default constructor that setup the environemnt."""
         # Initialisation
-        rs = baxter_interface.RobotEnable(CHECK_VERSION)
-        init_state = rs.state().enabled
-        rs.enable()
+        # rs = baxter_interface.RobotEnable(CHECK_VERSION)
+        # init_state = rs.state().enabled
+        # rs.enable()
 
         # This is the camera topic to be used for money recognition (Baxter's
         # head camera or RGB-D camera)
@@ -334,7 +334,7 @@ class Cashier:
         # Move there to get the money from customer's hand.
         self.planner.move_to_position(pose, arm)
         rospy.sleep(1)
-        
+
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
         rospy.sleep(1)
