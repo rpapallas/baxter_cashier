@@ -24,11 +24,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # System-wide imports
 import sys
+import time
 
 # ROS and Baxter specific imports
 import rospy
 from baxter_interface import Gripper, Limb
 from baxter_interface import CHECK_VERSION
+from baxter_core_msgs.msg import(DigitalIOState)
 
 # MoveIt! Specific imports
 import moveit_commander
@@ -135,9 +137,29 @@ class MoveItPlanner:
                                          moveit_msgs.msg.DisplayTrajectory,
                                          queue_size=30)
 
+    def release_moveit_from_robot(self, side):
+        pub = rospy.Publisher('/robot/digital_io/{}_lower_cuff/state'.format(side), DigitalIOState, queue_size=10)
+
+        timeout_start = time.time()
+        timeout = 1   # [seconds]
+        while time.time() < timeout_start + timeout:
+            pub.publish(1, True)
+
     def is_pose_within_reachable_area(self, pose):
-        point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.shape_size[0]
-        point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.shape_size[1]
+        # Initial Pose of table1: 0.7  -0.1   -0.53   (Size: 0.8   1.2   0.7)
+        # Initial Pose of table2: 0.7  -01   0.2       (Size: 0.8   1.2   0.7)
+
+        # Box bottom-left inner pose (xyz): -0.3 0.7 0.14
+        # Box bottom-left outer pose (xyz):  -1.1 0.7 0.14
+        # Box bottom-right inner pose (xyz): -0.3 -0.5 0.14
+        # Box bottom-right outter pose (xyz): -1.1 -0.5 0.14
+
+        # Box top-left inner pose (xyz): -0.3 0.7 -0.54
+        # Box top-left outer pose (xyz):  -1.1 0.7 -0.54
+        # Box top-right inner pose (xyz): -0.3 -0.5 -0.54
+        # Box top-right outter pose (xyz): -1.1 -0.5 -0.54
+        point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.size[0]
+        point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.size[1]
         lower_point_z = self.table_obstacle.pose.pose.position.z
         upper_point_z = lower_point_z * (-1)
 
@@ -216,6 +238,7 @@ class MoveItPlanner:
         self.active_hand.limb.set_joint_value_target(config)
         # self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
+        self.release_moveit_from_robot(self.active_hand._side_name)
 
     def move_to_position(self, baxter_pose, arm):
         """Will move Baxter hand to the pose."""
@@ -223,6 +246,7 @@ class MoveItPlanner:
         self.active_hand.limb.clear_pose_targets()
         self.active_hand.limb.set_pose_target(baxter_pose.get_pose())
         self.active_hand.limb.go(wait=True)
+        self.release_moveit_from_robot(self.active_hand._side_name)
 
     def leave_banknote_to_the_table(self):
         """
@@ -278,6 +302,7 @@ class MoveItPlanner:
         self.active_hand.limb.set_joint_value_target(config)
         # self.active_hand.limb.plan()
         self.active_hand.limb.go(wait=True)
+        self.release_moveit_from_robot(self.active_hand._side_name)
 
     def get_end_effector_current_pose(self, side_name):
         """

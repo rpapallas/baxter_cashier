@@ -168,12 +168,20 @@ class RoboticsLabEnvironment(Environment):
         self._obstacles.append(back_wall)
 
         table = Obstacle(obstalce_name="table",
-                                       x=0.8,
-                                       y=0,
-                                       z=-0.54,
-                                       shape_size=(1, 1.5, 0.8))
+                                       x=0.7,
+                                       y=-0.1,
+                                       z=-0.53,
+                                       shape_size=(0.8, 1.2, 0.7))
 
         self._obstacles.append(table)
+
+        # table = Obstacle(obstalce_name="table2",
+        #                                x=0.7,
+        #                                y=-0.1,
+        #                                z=0.2,
+        #                                shape_size=(0.8, 1.2, 0.7))
+        #
+        # self._obstacles.append(table)
 
         camera_tripod = Obstacle(obstalce_name="camera_tripod",
                                                x=0.6,
@@ -182,6 +190,7 @@ class RoboticsLabEnvironment(Environment):
                                                shape_size=(1, 0.3, 1.8))
 
         self._obstacles.append(camera_tripod)
+        # width, length, height
 
     def clone(self):
         """Required method for the Template design pattern."""
