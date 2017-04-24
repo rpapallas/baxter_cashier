@@ -50,15 +50,15 @@ class ImageGenerator:
     def __init__(self):
         rospack = rospkg.RosPack()
         path = rospack.get_path('baxter_cashier_manipulation')
-        full_path = cv2.imread(path + "/img/")
+        full_path = path + "/img/"
 
         self.template_amount_due = cv2.imread(full_path + 'amount_due_template.png')
         self.template_change_due = cv2.imread(full_path + 'change_due_template.png')
         self.thank_you_image = cv2.imread(full_path + 'thank_you_message.png')
 
         # Vertical banknotes
-        self.five_bill = cv2.imread(full_path + 'five_bill.png')
-        self.one_bill = cv2.imread(full_path + 'one_bill.png')
+        self.five_bill = cv2.imread(full_path + 'five_bill_vertical.png')
+        self.one_bill = cv2.imread(full_path + 'one_bill_vertical.png')
 
         # Reise the banknotes to smaller so they can fit
         self.five_bill = cv2.resize(self.five_bill, (100, 180))
@@ -72,7 +72,7 @@ class ImageGenerator:
         if change_due == 0:
             return self.thank_you_image
 
-        img = self.template_change_due
+        img = copy.deepcopy(self.template_change_due)
         cv2.putText(img, str(change_due), (650, 323), self.font, 2, (0, 0, 0), 3)
         return img
 
@@ -80,11 +80,12 @@ class ImageGenerator:
         def get_image_from_number(number):
             return self.five_bill if number == 5 else self.one_bill
 
-        img = self.template_amount_due
+        self.x_offset = 30
+        img = copy.deepcopy(self.template_amount_due)
         cv2.putText(img, str(amount_due), (650, 130), self.font, 2, (0, 0, 0), 3)
 
         for number in banknotes_given:
-            banknote_image = get_image_from_number(number)
+            banknote_image = copy.deepcopy(get_image_from_number(number))
             img[self.y_offset:self.y_offset+banknote_image.shape[0], self.x_offset:self.x_offset+banknote_image.shape[1]] = banknote_image
             self.x_offset += 120
 
@@ -290,6 +291,7 @@ class Cashier:
                 self.give_money_to_customer()
                 continue
 
+            print self.banknotes_given
             amount_due_image = self.image_generator.generate_amount_due(amount_due=self.amount_due,
                                                                         banknotes_given=self.banknotes_given)
             self.show_image_to_baxters_head_screen(image_path=None, image=amount_due_image)
@@ -331,7 +333,8 @@ class Cashier:
         """Will take money from the customer."""
         # Move there to get the money from customer's hand.
         self.planner.move_to_position(pose, arm)
-
+        rospy.sleep(1)
+        
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
         rospy.sleep(1)
@@ -440,7 +443,7 @@ class Cashier:
             path = rospack.get_path('baxter_cashier_manipulation')
             img = cv2.imread(path + "/img/" + image_path)
 
-        if image:
+        if image is not None:
             img = image
 
         msg = cv_bridge.CvBridge().cv2_to_imgmsg(img, encoding="bgr8")
@@ -547,3 +550,4 @@ if __name__ == '__main__':
 
     while True:
         cashier.interact_with_customer()
+        cashier.amount_due = 3

@@ -140,30 +140,28 @@ class BodyTrackerListener:
 
         while True:
             try:
-                if number_of_consecutive_frames == 1:
-                    # Calculate upper and lower bounds
-                    xs = map(lambda v: v + trans[0], [0.2, -0.2])
-                    ys = map(lambda v: v + trans[1], [0.2, -0.2])
-                    zs = map(lambda v: v + trans[2], [0.2, -0.2])
-
-                if number_of_consecutive_frames == 5:
-                    break
+                # if number_of_consecutive_frames == 1:
+                #     # Calculate upper and lower bounds
+                #     xs = map(lambda v: v + trans[0], [0.2, -0.2])
+                #     ys = map(lambda v: v + trans[1], [0.2, -0.2])
+                #     zs = map(lambda v: v + trans[2], [0.2, -0.2])
+                #
+                # if number_of_consecutive_frames == 3:
+                #     break
 
                 # Try to listen for the transformation and rotation of the node
                 (trans, _) = self._listener.lookupTransform(source,
                                                             target,
                                                             rospy.Time(0))
-                
-                x, y, z = trans
 
-                if (x <= xs[0] and x >= xs[1]) and \
-                   (y <= ys[0] and y >= ys[1]) and \
-                   (z <= zs[0] and z >= zs[1]):
-                    number_of_consecutive_frames += 1
-                else:
-                    number_of_consecutive_frames = 1
+                break
 
-                print "Number of consecutive frames: " + str(number_of_consecutive_frames)
+                # if (x <= xs[0] and x >= xs[1]) and \
+                #    (y <= ys[0] and y >= ys[1]) and \
+                #    (z <= zs[0] and z >= zs[1]):
+                #     number_of_consecutive_frames += 1
+                # else:
+                #     number_of_consecutive_frames = 1
 
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
