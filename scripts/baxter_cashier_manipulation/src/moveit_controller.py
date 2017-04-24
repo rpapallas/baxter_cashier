@@ -158,6 +158,7 @@ class MoveItPlanner:
         # Box top-left outer pose (xyz):  -1.1 0.7 -0.54
         # Box top-right inner pose (xyz): -0.3 -0.5 -0.54
         # Box top-right outter pose (xyz): -1.1 -0.5 -0.54
+        return True
         point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.size[0]
         point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.size[1]
         lower_point_z = self.table_obstacle.pose.pose.position.z
