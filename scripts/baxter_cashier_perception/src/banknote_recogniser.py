@@ -68,8 +68,10 @@ class BanknoteRecogniser:
         while time.time() < timeout_start + timeout:
             # Try to detect either the 5 or the 1 banknote.
             if self.try_to_detect(5) is not None:
+                print "Trying 5"
                 return RecogniseBanknoteResponse(5)
             elif self.try_to_detect(1) is not None:
+                print "Trying 1"
                 return RecogniseBanknoteResponse(1)
 
             self._RATE.sleep()

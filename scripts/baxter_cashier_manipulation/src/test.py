@@ -14,7 +14,7 @@ rospy.init_node('move_group_python_interface', anonymous=True)
 
 # MoveIt! Configuration
 limb = MoveGroupCommander("left_arm")
-limb.set_end_effector_link("left_gripper")
+limb.set_end_effector_link("left_endpoint")
 limb.set_planner_id("RRTConnectkConfigDefault")
 limb.set_goal_position_tolerance(0.01)
 limb.set_goal_orientation_tolerance(0.01)
@@ -35,18 +35,18 @@ left_hand = {'left_w0': 2.64343239272,
              'left_e1': 2.12494688642,
              'left_s0': 0.956820516444,
              'left_s1': -0.369305874683}
-limb.set_joint_value_target(left_hand)
-limb.go(wait=True)
-
-pub = rospy.Publisher('/robot/digital_io/left_lower_cuff/state', DigitalIOState, queue_size=10)
-
-timeout_start = time.time()
-timeout = 1   # [seconds]
-while time.time() < timeout_start + timeout:
-    pub.publish(1, True)
+# limb.set_joint_value_target(left_hand)
+# limb.go(wait=True)
+#
+# pub = rospy.Publisher('/robot/digital_io/left_lower_cuff/state', DigitalIOState, queue_size=10)
+#
+# timeout_start = time.time()
+# timeout = 1   # [seconds]
+# while time.time() < timeout_start + timeout:
+#     pub.publish(1, True)
 
 # Move to neutral position - BAXTER'S DEFAULT
-_limb.move_to_neutral()
+# _limb.move_to_neutral()
 
 # moveit_commander.os._exit(0)
 # rostopic pub -r 1000 /robot/digital_io/left_lower_cuff/state baxter_core_msgs/DigitalIOState '{state: 1,
