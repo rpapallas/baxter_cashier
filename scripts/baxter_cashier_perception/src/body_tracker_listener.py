@@ -78,7 +78,7 @@ class BodyTrackerListener:
         """Default constructor."""
         # General default configuration for the listener
         self._listener = tf.TransformListener()
-        self._RATE = rospy.Rate(0.3)
+        self._RATE = rospy.Rate(0.1)
 
     def _is_body_part_valid(self, body_part):
         """
@@ -136,20 +136,36 @@ class BodyTrackerListener:
         trans = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
+        number_of_consecutive_frames = 0
+
         while True:
+            if number_of_consecutive_frames == 1:
+                break
+
             try:
                 # Try to listen for the transformation and rotation of the node
-                now = rospy.Time.now()
-                self._listener.waitForTransform(source, target, now, rospy.Duration(4.0))
                 (trans, _) = self._listener.lookupTransform(source,
                                                             target,
-                                                            now)
-                break
+                                                            rospy.Time(0))
             except (tf.LookupException, tf.ConnectivityException,
                     tf.ExtrapolationException) as e:
-                print(e)
+                continue
 
-            self._RATE.sleep()
+            x, y, z = trans
+
+            if number_of_consecutive_frames == 0:
+                xs = map(lambda v: v + x, [0.10, -0.10])
+                ys = map(lambda v: v + y, [0.10, -0.10])
+                zs = map(lambda v: v + z, [0.10, -0.10])
+
+            if (x >= xs[1] and x <= xs[0]) and \
+                (y >= ys[1] and y <= ys[0]) and \
+                (z >= zs[1] and z <= zs[0]):
+                number_of_consecutive_frames += 1
+            else:
+                number_of_consecutive_frames = 0
+
+            time.sleep(1)
 
         rotation = [0.559, -0.504, 0.480, -0.451]
 

@@ -62,6 +62,7 @@ class MoveItArm:
         # did was able to find a very good pose using Forward Kinematics,
         # so instead the Baxter SDK is used here to do these two jobs.
         self.gripper = Gripper(side_name, CHECK_VERSION)
+        self.gripper.calibrate()
         self._limb = Limb(side_name)
 
         # This solver seems to be better for finding solution among obstacles
@@ -158,27 +159,33 @@ class MoveItPlanner:
         # Box top-left outer pose (xyz):  -1.1 0.7 -0.54
         # Box top-right inner pose (xyz): -0.3 -0.5 -0.54
         # Box top-right outter pose (xyz): -1.1 -0.5 -0.54
-        return True
-        point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.size[0]
-        point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.size[1]
-        lower_point_z = self.table_obstacle.pose.pose.position.z
-        upper_point_z = lower_point_z * (-1)
+        # point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.size[0]
+        # point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.size[1]
+        # lower_point_z = self.table_obstacle.pose.pose.position.z
+        # upper_point_z = lower_point_z * (-1)
+        #
+        # if upper_point_z == 0:
+        #     upper_point_z = 0.58
+        #     lower_point_z = -0.58
 
-        if upper_point_z == 0:
-            upper_point_z = 0.58
-            lower_point_z = -0.58
+        upper_x = 1
+        lower_x = 0.3
+
+        upper_y = 0.5
+        lower_y = -0.7
+
+        upper_z = 0.5
+        lower_z = 0
 
         pose_x = pose.transformation_x
         pose_y = pose.transformation_y
         pose_z = pose.transformation_z
 
-        if pose_z < upper_point_z and pose_z >= lower_point_z:
-            if pose_y <= point_y and pose_x <= point_x:
-                print "Within reachable area!!!!!!"
-                return True
-
-        print "Not in reachable area"
-
+        if pose_z <= upper_z and pose_z >= lower_z:
+            if pose_y <= upper_y and pose_y >= lower_y:
+                if pose_x <= upper_x and pose_x >= lower_x:
+                    return True
+                    
         return False
 
     def _create_scene(self):

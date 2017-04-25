@@ -30,6 +30,7 @@ import time
 
 import baxter_interface
 from baxter_interface import CHECK_VERSION
+from baxter_interface import CameraController
 
 # ROS specific imports
 import rospy
@@ -178,9 +179,9 @@ class Cashier:
     def __init__(self):
         """Default constructor that setup the environemnt."""
         # Initialisation
-        # rs = baxter_interface.RobotEnable(CHECK_VERSION)
-        # init_state = rs.state().enabled
-        # rs.enable()
+        rs = baxter_interface.RobotEnable(CHECK_VERSION)
+        init_state = rs.state().enabled
+        rs.enable()
 
         # This is the camera topic to be used for money recognition (Baxter's
         # head camera or RGB-D camera)
@@ -196,10 +197,18 @@ class Cashier:
         self.banknotes_table_left = self.set_banknotes_on_table(side="left")
         self.banknotes_table_right = self.set_banknotes_on_table(side="right")
 
-        self.banknote_recognition_task_completed = False
+        self.banknote_recognition_or_hand_pose_detection_task_completed = False
 
         self.banknotes_given = []
         self.image_generator = ImageGenerator()
+
+        try:
+            left_hand_camera = CameraController('left_hand_camera')
+            head_camera = CameraController('head_camera')
+            left_hand_camera.close()
+            head_camera.open()
+        except:
+            pass
 
     def set_banknotes_on_table(self, side):
         """
@@ -296,6 +305,10 @@ class Cashier:
                                                                         banknotes_given=self.banknotes_given)
             self.show_image_to_baxters_head_screen(image_path=None, image=amount_due_image)
 
+            # Here show Baxter's eyes moving to show that the robot is not stuck
+            # but is instead "thinking" (because eyes are moving)
+            self.run_nonblocking(self.make_eyes_animated_reading_banknote)
+
             # Get the hand pose of customer's two hands.
             left_pose, right_pose = self.get_pose_from_space()
 
@@ -307,10 +320,12 @@ class Cashier:
             # pose. Baxter's left arm is closer to user's right hand and vice
             # versa.
             if self.pose_is_reachable(left_pose):
+                self.banknote_recognition_or_hand_pose_detection_task_completed = True
                 self.take_money_from_customer(left_pose,
                                               self.planner.right_arm)
 
             elif self.pose_is_reachable(right_pose):
+                self.banknote_recognition_or_hand_pose_detection_task_completed = True
                 self.take_money_from_customer(right_pose,
                                               self.planner.left_arm)
             else:
@@ -333,7 +348,6 @@ class Cashier:
         """Will take money from the customer."""
         # Move there to get the money from customer's hand.
         self.planner.move_to_position(pose, arm)
-        rospy.sleep(1)
 
         # Open/Close the Gripper to catch the money from customer's hand
         self.planner.open_gripper()
@@ -368,7 +382,6 @@ class Cashier:
         else:
             self.show_image_to_baxters_head_screen("unable_to_recognise.png")
 
-        self.show_eyes_normal()
         self.planner.set_neutral_position_of_limb()
 
     def get_banknote_value(self):
@@ -377,7 +390,7 @@ class Cashier:
         This will either return a correct amount like 1 or 5 but also -1 if
         nothing detected.
         """
-        self.banknote_recognition_task_completed = False
+        self.banknote_recognition_or_hand_pose_detection_task_completed = False
 
         # This method blocks until the service 'get_user_pose' is available
         rospy.wait_for_service('recognise_banknote')
@@ -389,12 +402,12 @@ class Cashier:
 
             # Use the handle as any other normal function
             value = recognise_banknote(self._money_recognition_camera_topic)
-            self.banknote_recognition_task_completed = True
+            self.banknote_recognition_or_hand_pose_detection_task_completed = True
             return value.banknote_amount
         except rospy.ServiceException as e:
             print("Service call failed: %s" % e)
 
-        self.banknote_recognition_task_completed = True
+        self.banknote_recognition_or_hand_pose_detection_task_completed = True
         return None
 
     def run_nonblocking(self, function):
@@ -416,9 +429,10 @@ class Cashier:
                       self.show_eyes_focusing_right,
                       self.show_eyes_focusing_left]
 
-        for func in funcs:
-            if self.banknote_recognition_task_completed == False:
-                func()
+        while True:
+            for func in funcs:
+                if self.banknote_recognition_or_hand_pose_detection_task_completed == False:
+                    func()
 
     def show_eyes_normal(self):
         """Will show normal eyes to Baxter's screen."""
@@ -515,6 +529,8 @@ class Cashier:
 
     def get_pose_from_space(self):
         """Will return the user's hand-pose from space."""
+        self.banknote_recognition_or_hand_pose_detection_task_completed = False
+
         # This method blocks until the service 'get_user_pose' is available
         rospy.wait_for_service('get_user_pose')
 

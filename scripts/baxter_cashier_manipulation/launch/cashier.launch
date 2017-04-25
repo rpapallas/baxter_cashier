@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <!--        2. Launch/Run the perception part of the project    -->
     <!-- =================================================================== -->
     <!-- Custom service that tracks user's hand pose and return the pose -->
-    <node pkg="baxter_cashier_perception" type="body_tracker_listener.py" name="body_tracker_service"/>
+    <node pkg="baxter_cashier_perception" type="body_tracker_listener.py" name="body_tracker_service" output="screen"/>
     <include file="$(find baxter_cashier_perception)/launch/baxter_head_camera_ar_track.launch" />
     <node pkg="baxter_cashier_perception" type="banknote_recogniser.py" name="banknote_recogniser"/>
 
