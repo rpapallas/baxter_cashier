@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+# [camera/camera_nodelet_manager-1] process has died
 from Tkinter import Tk, Label, Button, Entry, StringVar, DISABLED, NORMAL, END, W, E
 import Tkinter
 import subprocess
 from subprocess import Popen, PIPE
 import threading
+import os
 
 class Node(threading.Thread):
   def __init__(self, command):
@@ -18,12 +21,12 @@ class Node(threading.Thread):
 
   def b(self):
     self.is_running = True
-    self.process = Popen(self._command, stdout=PIPE, stderr=PIPE)
+    self.process = Popen(self._command, stdout=PIPE, stderr=PIPE, shell=True)
     self.stdout, self.stderr = self.process.communicate()
 
   def run(self):
     self.is_running = True
-    self.process = Popen(self._command, stdout=PIPE, stderr=PIPE)
+    self.process = Popen(self._command, stdout=PIPE, stderr=PIPE,  shell=True)
     self.stdout, self.stderr = self.process.communicate()
 
 
@@ -31,6 +34,9 @@ class RunTool:
   def __init__(self, master):
     self.camera_driver = None
     self.skeleton_tracker = None
+    self.moveit = None
+    self.cashier = None
+    self.shopkeeper = None
 
     def create_label(text):
       label_text = StringVar()
@@ -113,7 +119,8 @@ class RunTool:
       self.start_camera_driver.configure(text="Start")
       print("Camera driver stopped...")
     else:
-      self.camera_driver = Node(['roslaunch', 'baxter_cashier_perception', 'camera_driver.launch'])
+      cmd = os.path.expanduser('~/ros_ws/baxter.sh')
+      self.camera_driver = Node('{}; roslaunch baxter_cashier_perception camera_driver.launch'.format(cmd))
       self.camera_driver.start()
       self.start_camera_driver.configure(text="Stop")
       print("Camera driver started...")
@@ -125,30 +132,53 @@ class RunTool:
       self.start_skeleton_tracker.configure(text="Start")
       print("Camera driver stopped...")
     else:
-      self.skeleton_tracker = Node(['roslaunch', 'baxter_cashier_perception', 'body_tracker.launch'])
+      cmd = os.path.expanduser('~/ros_ws/baxter.sh')
+      self.skeleton_tracker = Node('{};  roslaunch baxter_cashier_perception body_tracker.launch'.format(cmd))
       self.skeleton_tracker.start()
       self.start_skeleton_tracker.configure(text="Stop")
       print("Camera driver started...")
 
   def moveit_callback(self):
-    text = "Stop" if self.start_moveit['text'] == "Start" else "Start"
-    self.start_moveit.configure(text=text)
-    print("MoveIt")
+    if self.moveit is not None and self.moveit.is_running:
+      self.moveit.stop()
+      self.moveit = None
+      self.start_moveit.configure(text="Start")
+      print("Camera driver stopped...")
+    else:
+      cmd = os.path.expanduser('~/ros_ws/baxter.sh')
+      self.moveit = Node('{}; roslaunch baxter_cashier_manipulation moveit.launch'.format(cmd))
+      self.moveit.start()
+      self.start_moveit.configure(text="Stop")
+      print("Camera driver started...")
 
   def camera_calibrator_tool_callback(self):
-    text = "Stop" if self.start_calibration_tool['text'] == "Start" else "Start"
-    self.start_calibration_tool.configure(text=text)
-    print("Calibrator")
+      pass
 
   def cashier_callback(self):
-    text = "Stop" if self.start_cashier['text'] == "Start" else "Start"
-    self.start_cashier.configure(text=text)
-    print("Cashier")
+    if self.cashier is not None and self.cashier.is_running:
+      self.cashier.stop()
+      self.cashier = None
+      self.start_cashier.configure(text="Start")
+      print("Camera driver stopped...")
+    else:
+      cmd = os.path.expanduser('~/ros_ws/baxter.sh')
+      self.cashier = Node('{}; roslaunch baxter_cashier_manipulation cashier.launch'.format(cmd))
+      self.cashier.start()
+      self.start_cashier.configure(text="Stop")
+      print("Camera driver started...")
 
   def shopkeeper_callback(self):
-    text = "Stop" if self.start_shopkeeper['text'] == "Start" else "Start"
-    self.start_shopkeeper.configure(text=text)
-    print("Shopkeeper")
+    if self.shopkeeper is not None and self.shopkeeper.is_running:
+      self.shopkeeper.stop()
+      self.shopkeeper = None
+      self.start_shopkeeper.configure(text="Start")
+      print("Camera driver stopped...")
+    else:
+      cmd = os.path.expanduser('~/ros_ws/baxter.sh')
+      self.shopkeeper = Node('{}; roslaunch manipulation shopkeeper_nk.launch'.format(cmd))
+      self.shopkeeper.start()
+      self.start_shopkeeper.configure(text="Stop")
+      print("Camera driver started...")
 
 root = Tk()
 my_gui = RunTool(root)
