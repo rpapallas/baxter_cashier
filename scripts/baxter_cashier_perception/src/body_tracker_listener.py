@@ -147,9 +147,8 @@ class BodyTrackerListener:
                 (trans, _) = self._listener.lookupTransform(source,
                                                             target,
                                                             rospy.Time(0))
-            except (tf.LookupException, tf.ConnectivityException,
-                    tf.ExtrapolationException) as e:
-                continue
+            except:
+                target = "cob_body_tracker/user_{}/{}".format(user_number+1, body_part)
 
             x, y, z = trans
 
@@ -165,7 +164,7 @@ class BodyTrackerListener:
             else:
                 number_of_consecutive_frames = 0
 
-            time.sleep(1)
+            time.sleep(0.5)
 
         rotation = [0.559, -0.504, 0.480, -0.451]
 
