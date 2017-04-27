@@ -178,11 +178,6 @@ class Cashier:
 
     def __init__(self):
         """Default constructor that setup the environemnt."""
-        # Initialisation
-        rs = baxter_interface.RobotEnable(CHECK_VERSION)
-        init_state = rs.state().enabled
-        rs.enable()
-
         # This is the camera topic to be used for money recognition (Baxter's
         # head camera or RGB-D camera)
         self._money_recognition_camera_topic = "/cameras/head_camera/image"
@@ -201,14 +196,6 @@ class Cashier:
 
         self.banknotes_given = []
         self.image_generator = ImageGenerator()
-
-        try:
-            left_hand_camera = CameraController('left_hand_camera')
-            head_camera = CameraController('head_camera')
-            left_hand_camera.close()
-            head_camera.open()
-        except:
-            pass
 
     def set_banknotes_on_table(self, side):
         """
@@ -281,6 +268,14 @@ class Cashier:
         def pose_is_outdated(pose):
             """Will check whether the pose is recent or not."""
             return (time.time() - pose.created) > 3
+
+        try:
+            left_hand_camera = CameraController('left_hand_camera')
+            head_camera = CameraController('head_camera')
+            left_hand_camera.close()
+            head_camera.open()
+        except:
+            pass
 
         # Make Baxter's screen eyes to shown normal
         self.show_eyes_normal()
@@ -553,6 +548,9 @@ class Cashier:
 
 if __name__ == '__main__':
     rospy.init_node("baxter_cashier")
+    rs = baxter_interface.RobotEnable(CHECK_VERSION)
+    init_state = rs.state().enabled
+    rs.enable()
     cashier = Cashier()
 
     while True:
