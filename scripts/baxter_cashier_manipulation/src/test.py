@@ -1,53 +1,46 @@
 #!/usr/bin/env python
 import rospy
-from baxter_interface import Gripper, Limb
-from baxter_interface import CHECK_VERSION
-from baxter_core_msgs.msg import(DigitalIOState)
 import time
+import sys
+from moveit_controller import MoveItPlanner
 
-# MoveIt! Specific imports
-import moveit_commander
-import moveit_msgs.msg
-from moveit_commander import MoveGroupCommander
+if __name__ == '__main__':
+    rospy.init_node("demo")
+    rs = baxter_interface.RobotEnable(CHECK_VERSION)
+    init_state = rs.state().enabled
+    rs.enable()
 
-rospy.init_node('move_group_python_interface', anonymous=True)
+    planner = MoveItPlanner()
+    hand = sys.argv[1]  # Either "left" or "right"
 
-# MoveIt! Configuration
-limb = MoveGroupCommander("left_arm")
-limb.set_end_effector_link("left_endpoint")
-limb.set_planner_id("RRTConnectkConfigDefault")
-limb.set_goal_position_tolerance(0.01)
-limb.set_goal_orientation_tolerance(0.01)
-scene = moveit_commander.PlanningSceneInterface()
-# publisher = rospy.Publisher('/move_group/display_planned_path',
-#                             moveit_msgs.msg.DisplayTrajectory,
-#                             queue_size=30)
+    # Set which hand MoveIt to use (based on the command-line argument)
+    active_hand = planner.left_arm if hand == "left" else planner.right_arm
 
-# Baxter's default planner configuraiton
-_limb = Limb("left")
-gripper = Gripper("left", CHECK_VERSION)
+    # This will "say" to MoveIt which hand to use
+    planner.active_hand = active_hand
 
-# Move left hand to head camera - MOVEIT
-left_hand = {'left_w0': 2.64343239272,
-             'left_w1': -0.846373899716,
-             'left_w2': -2.14527213186,
-             'left_e0': -2.40988381777,
-             'left_e1': 2.12494688642,
-             'left_s0': 0.956820516444,
-             'left_s1': -0.369305874683}
-# limb.set_joint_value_target(left_hand)
-# limb.go(wait=True)
-#
-# pub = rospy.Publisher('/robot/digital_io/left_lower_cuff/state', DigitalIOState, queue_size=10)
-#
-# timeout_start = time.time()
-# timeout = 1   # [seconds]
-# while time.time() < timeout_start + timeout:
-#     pub.publish(1, True)
+    # Pose to get item
+    input("Move {} hand to position and click ENTER (Take State)...".format(hand))
+    pose1 = planner.get_end_effector_current_pose()
 
-# Move to neutral position - BAXTER'S DEFAULT
-# _limb.move_to_neutral()
+    # Pose to give item over
+    input("Move {} hand to position and click ENTER (Give State)...".format(hand))
+    pose2 = planner.get_end_effector_current_pose()
 
-# moveit_commander.os._exit(0)
-# rostopic pub -r 1000 /robot/digital_io/left_lower_cuff/state baxter_core_msgs/DigitalIOState '{state: 1,
-# isInputOnly: True}'
+    print "Poses recorded."
+
+
+
+    input("Click ENTER to move hand to TAKE position...")
+    planner.move_to_position(pose1)
+
+    input("Click ENTER to close the gripper now...")
+    planner.close_gripper()
+
+
+
+    input("Click ENTER to move hand to GIVE position...")
+    planner.move_to_position(pose2)
+
+    input("Click ENTER to open the gripper now...")
+    planner.open_gripper()
