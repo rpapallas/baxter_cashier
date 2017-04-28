@@ -185,7 +185,7 @@ class MoveItPlanner:
             if pose_y <= upper_y and pose_y >= lower_y:
                 if pose_x <= upper_x and pose_x >= lower_x:
                     return True
-                    
+
         return False
 
     def _create_scene(self):

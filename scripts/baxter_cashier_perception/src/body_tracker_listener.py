@@ -131,14 +131,14 @@ class BodyTrackerListener:
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
         source = '/base'
-        target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
-
+        
         trans = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
         number_of_consecutive_frames = 0
 
         while True:
+            target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
             if number_of_consecutive_frames == 1:
                 break
 
@@ -148,7 +148,10 @@ class BodyTrackerListener:
                                                             target,
                                                             rospy.Time(0))
             except:
-                target = "cob_body_tracker/user_{}/{}".format(user_number+1, body_part)
+                if body_part < 3:
+                    body_part += 1
+                else:
+                    body_part = 1
 
             x, y, z = trans
 
