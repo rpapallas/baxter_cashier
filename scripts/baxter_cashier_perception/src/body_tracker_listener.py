@@ -120,18 +120,10 @@ class BodyTrackerListener:
 
         return GetUserPoseResponse(tran, rot)
 
-    def pose_elimination(self, hand, elbow, shoulder):
-        """
-        Will Eliminate invalid poses.
-
-        This algorithm eliminates poses that are not in the hand-pose.
-        """
-        pass
-
     def _listen(self, user_number, body_part):
         # Source is the node parent and target the child we are looking for.
         source = '/base'
-        
+
         trans = [0, 0, 0]
         rotation = [0, 0, 0, 0]
 
@@ -148,10 +140,11 @@ class BodyTrackerListener:
                                                             target,
                                                             rospy.Time(0))
             except:
-                if body_part < 3:
-                    body_part += 1
+                if user_number < 4:
+                    user_number += 1
                 else:
-                    body_part = 1
+                    user_number = 1
+                continue
 
             x, y, z = trans
 
