@@ -112,7 +112,7 @@ class BanknotesOnTable:
         self._number_of_remaining_banknotes = num_of_remaining_banknotes
         self.banknotes = [Banknote(initial_pose)]
 
-        self._calculate_pose_of_remaining_poses()
+        self._calculate_pose_of_remaining_poses(table_side)
 
     def is_left(self):
         """
@@ -153,18 +153,26 @@ class BanknotesOnTable:
 
         return None
 
-    def _calculate_pose_of_remaining_poses(self):
+    def _calculate_pose_of_remaining_poses(self, side):
         """
         Will calculate the remaining banknotes on the table.
 
         This will calculate the poses of the remaining banknotes on the table.
         """
         static_x_to_be_added = 0.10  # 10cm
+        static_y_to_be_added = -0.10
 
-        for _ in range(0, self._number_of_remaining_banknotes):
-            new_pose = copy.deepcopy(self.banknotes[-1])
-            new_pose.pose.transformation_x += static_x_to_be_added
-            self.banknotes.append(new_pose)
+        if side == "right":
+            for _ in range(0, self._number_of_remaining_banknotes):
+                new_pose = copy.deepcopy(self.banknotes[-1])
+                new_pose.pose.transformation_x += static_x_to_be_added
+                self.banknotes.append(new_pose)
+
+        if side == "left":
+            for _ in range(0, self._number_of_remaining_banknotes):
+                new_pose = copy.deepcopy(self.banknotes[-1])
+                new_pose.pose.transformation_y += static_y_to_be_added
+                self.banknotes.append(new_pose)
 
 
 class Cashier:
@@ -249,6 +257,10 @@ class Cashier:
 
         # Once calibration is done, will move Baxter's arm back to normal pose
         self.planner.active_hand = arm
+        banknote_above = copy.deepcopy(banknote)
+        banknote_above.pose.transformation_z += 0.10
+        self.planner.move_to_position(banknote_above.pose, arm)
+
         self.planner.set_neutral_position_of_limb()
 
         return banknotes_on_table
@@ -488,7 +500,7 @@ class Cashier:
             # Now actually move exactly where the pose is to pick the banknote
             self.planner.move_to_position(banknote.pose, arm)
             self.planner.close_gripper()
-            self.planner.set_neutral_position_of_limb()
+            self.planner.move_to_position(banknote_above.pose, arm)
         else:
             print("No available banknotes on the table...")
 
@@ -554,5 +566,6 @@ if __name__ == '__main__':
     cashier = Cashier()
 
     while True:
+        amount_due = int(input("Enter amount due: "))
+        cashier.amount_due = amount_due
         cashier.interact_with_customer()
-        cashier.amount_due = 3

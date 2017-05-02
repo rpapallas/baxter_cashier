@@ -224,13 +224,13 @@ class MoveItPlanner:
         # These are  static joint  configurations that lead Baxter's hand to be
         # in a  money  detection  pose (i.e the hand is  locating near Baxter's
         # head camera trying to identify the banknote)
-        left_hand = {'left_w0': 2.64343239272,
-                     'left_w1': -0.846373899716,
-                     'left_w2': -2.14527213186,
-                     'left_e0': -2.40988381777,
-                     'left_e1': 2.12494688642,
-                     'left_s0': 0.956820516444,
-                     'left_s1': -0.369305874683}
+        left_hand = {'left_w0': -0.384645682562,
+                             'left_w1': 0.725956407867,
+                             'left_w2': -2.26300515733,
+                             'left_e0': -2.39032556272,
+                             'left_e1': 2.16636436769,
+                             'left_s0': 0.884723419413,
+                             'left_s1': -0.324436936638}
 
         right_hand = {'right_s0': -0.852509822867,
                       'right_s1': -0.521936963078,

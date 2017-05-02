@@ -128,6 +128,8 @@ class BodyTrackerListener:
         rotation = [0, 0, 0, 0]
 
         number_of_consecutive_frames = 0
+        timeout_start = time.time()
+        timeout = 2   # [seconds]
 
         while True:
             target = "cob_body_tracker/user_{}/{}".format(user_number, body_part)
@@ -140,11 +142,7 @@ class BodyTrackerListener:
                                                             target,
                                                             rospy.Time(0))
             except:
-                if user_number < 4:
-                    user_number += 1
-                else:
-                    user_number = 1
-                continue
+                return trans, rotation
 
             x, y, z = trans
 
