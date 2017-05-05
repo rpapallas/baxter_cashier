@@ -2,6 +2,7 @@
 import rospy
 import time
 import sys
+import os
 from geometry_msgs.msg import (
     PoseStamped,
     Pose,
@@ -58,6 +59,10 @@ class BaxterRunner:
     def __init__(self):
         self.right_arm = baxter_interface.Limb("right")
         self.left_arm = baxter_interface.Limb("left")
+        self.left_gripper = baxter_interface.Gripper("left", CHECK_VERSION)
+        self.left_gripper.calibrate()
+        self.right_gripper = baxter_interface.Gripper("right", CHECK_VERSION)
+        self.right_gripper.calibrate()
 
     def get_pose(self, limb):
         if limb == "right":
@@ -74,11 +79,12 @@ class BaxterRunner:
                          orientation.z,
                          orientation.w]
 
-        return BaxterPose(x, y, z, x2, y2, z2, w)
+        return CashierPose(x, y, z, x2, y2, z2, w)
 
-    def move_to(self, limb, pose):
-        solution = self.inverse_kinematic_solver(limb, pose)
-        limb.move_to_joint_positions(solution)
+    def move_to(self, side, pose):
+        arm = self.left_arm if side == "left" else self.right_arm
+        solution = self.inverse_kinematic_solver(side, pose)
+        arm.move_to_joint_positions(solution)
 
     def inverse_kinematic_solver(self, limb_side, pose_stamped):
         ns = "ExternalTools/" + limb_side + "/PositionKinematicsNode/IKService"
@@ -94,8 +100,6 @@ class BaxterRunner:
             rospy.logerr("Service call failed: %s" % (e,))
 
         if any(resp.isValid):
-            print("Valid Joint Solution Found")
-
             for i in range(len(resp.isValid)):
                 if resp.isValid[i]:
                     # Format solution into Limb API-compatible dictionary
@@ -107,18 +111,15 @@ class BaxterRunner:
 
         return None
 
-    def move_to(self, limb, joint_configurations):
-        limb.move_to_joint_positions(joint_configurations)
-
     def open_gripper(self, side):
         """Will open the gripper of the active hand."""
-        arm = self.right_arm if side == "right" else self.left_arm
-        self.arm.open_gripper()
+        gripper = self.left_gripper if side == "left" else self.right_gripper
+        gripper.open(block=True)
 
-    def close_gripper(self):
+    def close_gripper(self, side):
         """Will close the gripper of the active hand."""
-        arm = self.right_arm if side == "right" else self.left_arm
-        self.arm.close_gripper()
+        gripper = self.left_gripper if side == "left" else self.right_gripper
+        gripper.close(block=True)
 
 if __name__ == '__main__':
     rospy.init_node("demo")
@@ -126,33 +127,34 @@ if __name__ == '__main__':
     init_state = rs.state().enabled
     rs.enable()
 
+    os.system('clear')
     baxter = BaxterRunner()
     hand = sys.argv[1]  # Either "left" or "right"
 
     active_hand = baxter.left_arm if hand == "left" else baxter.right_arm
 
     # Pose to get item
-    input("Move {} hand to position and click ENTER (Take State)...".format(hand))
-    pose1 = baxter.get_pose(active_hand)
+    _ = raw_input("Move {} hand to position and click ENTER (Take State)...".format(hand))
+    pose1 = baxter.get_pose(hand)
 
     # Pose to give item over
-    input("Move {} hand to position and click ENTER (Give State)...".format(hand))
-    pose2 = baxter.get_pose(active_hand)
+    _ = raw_input("Move {} hand to position and click ENTER (Give State)...".format(hand))
+    pose2 = baxter.get_pose(hand)
 
     print "Poses recorded."
 
 
 
-    input("Click ENTER to move hand to TAKE position...")
-    baxter.move_to(active_hand, pose1.pose_stamped())
+    _ = raw_input("Click ENTER to move hand to TAKE position...")
+    baxter.move_to(hand, pose1.get_pose_stamped())
 
-    input("Click ENTER to close the gripper now...")
+    _ = raw_input("Click ENTER to close the gripper now...")
     baxter.close_gripper(hand)
 
 
 
-    input("Click ENTER to move hand to GIVE position...")
-    baxter.move_to(active_hand, pose2.pose_stamped())
+    _ = raw_input("Click ENTER to move hand to GIVE position...")
+    baxter.move_to(hand, pose2.get_pose_stamped())
 
-    input("Click ENTER to open the gripper now...")
+    _ = raw_input("Click ENTER to open the gripper now...")
     baxter.open_gripper(hand)
