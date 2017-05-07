@@ -26,7 +26,7 @@ from std_msgs.msg import Header
 
 
 class BaxterPose:
-    """Represents a pose."""
+    """Represents a pose that is used in the entire project."""
 
     def __init__(self, x1, y1, z1, x2, y2, z3, w):
         """Initialise the class with the given attributes."""

@@ -48,7 +48,17 @@ from moveit_controller import MoveItPlanner
 
 
 class ImageGenerator:
+    """
+        This class create dynamic images on the fly. Using some image templates
+        it will write text on the image using OpenCV library. The images are
+        the amount due and change due images that are displayed on Baxter's
+        head screen.
+    """
     def __init__(self):
+        """
+            Constructor that load the templates and some other constant
+            variables.
+        """
         rospack = rospkg.RosPack()
         path = rospack.get_path('baxter_cashier_manipulation')
         full_path = path + "/img/"
@@ -70,6 +80,7 @@ class ImageGenerator:
         self.y_offset = 350
 
     def generate_change_due(self, change_due):
+        """Generates the change due screen with the change due value on it."""
         if change_due == 0:
             return self.thank_you_image
 
@@ -78,6 +89,10 @@ class ImageGenerator:
         return img
 
     def generate_amount_due(self, amount_due, banknotes_given):
+        """
+            Generates the amount due with the banknotes given so far appended
+            on it.
+        """
         def get_image_from_number(number):
             return self.five_bill if number == 5 else self.one_bill
 
@@ -193,8 +208,7 @@ class Cashier:
         # Baxter's libms configured
         self.planner = MoveItPlanner()
 
-        # TODO: Make this zero, is just for testing purposes set to 3
-        self.amount_due = 3
+        self.amount_due = 0
         self.customer_last_pose = None
 
         self.banknotes_table_left = self.set_banknotes_on_table(side="left")
@@ -281,6 +295,7 @@ class Cashier:
             """Will check whether the pose is recent or not."""
             return (time.time() - pose.created) > 3
 
+        # Disable some Baxter's cameras and ensure that head camera is enabled.
         try:
             left_hand_camera = CameraController('left_hand_camera')
             head_camera = CameraController('head_camera')

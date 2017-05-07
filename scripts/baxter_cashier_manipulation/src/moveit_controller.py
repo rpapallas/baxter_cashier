@@ -147,27 +147,13 @@ class MoveItPlanner:
             pub.publish(1, True)
 
     def is_pose_within_reachable_area(self, pose):
-        # Initial Pose of table1: 0.7  -0.1   -0.53   (Size: 0.8   1.2   0.7)
-        # Initial Pose of table2: 0.7  -01   0.2       (Size: 0.8   1.2   0.7)
+        """
+            Determine if the pose is within the robot's rechable area.
 
-        # Box bottom-left inner pose (xyz): -0.3 0.7 0.14
-        # Box bottom-left outer pose (xyz):  -1.1 0.7 0.14
-        # Box bottom-right inner pose (xyz): -0.3 -0.5 0.14
-        # Box bottom-right outter pose (xyz): -1.1 -0.5 0.14
-
-        # Box top-left inner pose (xyz): -0.3 0.7 -0.54
-        # Box top-left outer pose (xyz):  -1.1 0.7 -0.54
-        # Box top-right inner pose (xyz): -0.3 -0.5 -0.54
-        # Box top-right outter pose (xyz): -1.1 -0.5 -0.54
-        # point_x = self.table_obstacle.pose.pose.position.x + self.table_obstacle.size[0]
-        # point_y = self.table_obstacle.pose.pose.position.y + self.table_obstacle.size[1]
-        # lower_point_z = self.table_obstacle.pose.pose.position.z
-        # upper_point_z = lower_point_z * (-1)
-        #
-        # if upper_point_z == 0:
-        #     upper_point_z = 0.58
-        #     lower_point_z = -0.58
-
+            Given a pose, this method will check if the pose is within the
+            robot's reachable area by doing boundary checks. The reachable area
+            is exactly above the table.
+        """
         upper_x = 1
         lower_x = 0.3
 

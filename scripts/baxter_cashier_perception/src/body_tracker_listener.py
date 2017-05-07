@@ -95,7 +95,6 @@ class BodyTrackerListener:
 
         return True if body_part in possible_body_parts else False
 
-    # TODO: Consider refactoring the name of the method to make more sense.
     def start_listening_for(self, request):
         """
         Will listen for request.
