@@ -2,6 +2,9 @@
 
 This is a Final Year Project done at the University of Leeds. Should you use any of the ideas, code, images or any other material found in this repository should be reference the original author which is "The University of Leeds" and "Rafael Papalas".
 
+[![Demo](https://img.youtube.com/vi/dUGXIO3NPXM/0.jpg)](https://www.youtube.com/watch?v=dUGXIO3NPXM)
+[![Details](https://img.youtube.com/vi/3DlCj9DgiZA/0.jpg)](https://www.youtube.com/watch?v=3DlCj9DgiZA)
+
 0 Introduction
 ===============
 
