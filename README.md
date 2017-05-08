@@ -30,11 +30,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 2 About The Project
 ====================
 
-This project is focusing on developing packages and algorithms for Baxter Robot by Rethink Robotics. The project's aim is to make Baxter a cashier in a sweetshop. 
-
-This involves several aspects:
-- Perception: Skeleton Tracking to identify hand-pose of the customer.
-- Manipulation: Baxter to get and give money to the customer's hand.
+This project is focusing on developing packages and algorithms for Baxter Robot by Rethink Robotics. The project's aim is to make Baxter a cashier in a sweetshop.
 
 2.1 How the repository is organised
 -----------------------------------
