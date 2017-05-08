@@ -20,6 +20,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 ![Baxter](https://cloud.githubusercontent.com/assets/6514550/23082358/ef6cd810-f550-11e6-9088-c54a4a1f7a3b.png)
 
+### Project in pictures
 ![Project in pictures](https://github.com/papallas/baxter_cashier/blob/master/img/project_explanation.png)
 
 
