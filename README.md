@@ -2,10 +2,14 @@
 
 This is a Final Year Project done at the University of Leeds. Should you use any of the ideas, code, images or any other material found in this repository should be reference the original author which is "The University of Leeds" and "Rafael Papalas".
 
-## Two videos demonstrating the project
+Table of Contents
+====================
 
-[![Demo](https://img.youtube.com/vi/dUGXIO3NPXM/0.jpg)](https://www.youtube.com/watch?v=dUGXIO3NPXM)
-[![Details](https://img.youtube.com/vi/3DlCj9DgiZA/0.jpg)](https://www.youtube.com/watch?v=3DlCj9DgiZA)
+  * [0. Introduction](#0-introduction)
+  * [1. Table of Contents](#1-table-of-contents)
+  * [2. About The Project](#2-about-the-project)
+    * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
+    * [2.2 Make use of project's wiki](#22-make-use-of-projects-wiki)
 
 0 Introduction
 ===============
@@ -22,16 +26,6 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 ### Project in pictures
 ![Project in pictures](https://github.com/papallas/baxter_cashier/blob/master/img/project_explanation.png)
-
-
-1 Table of Contents
-====================
-
-  * [0. Introduction](#0-introduction)
-  * [1. Table of Contents](#1-table-of-contents)
-  * [2. About The Project](#2-about-the-project)
-    * [2.1 How the repository is organised](#21-how-the-repository-is-organised)
-    * [2.2 Make use of project's wiki](#22-make-use-of-projects-wiki)
 
 2 About The Project
 ====================
