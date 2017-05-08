@@ -54,6 +54,6 @@ By the end of the project probably most of the issues will be closed and hence y
 
 Milestones are great way to visualise the project in different phases and issues are assigned to phases.
 
-2.2 Make use of project's wiki
-------------------------------
+2.2 Make use of project's wiki (Instructions how to run the project included)
+-----------------------------------------------------------------------------
 **Detailed** instructions on how to install, configure, print the banknotes and actually anything required to run the project is available in the Wiki of the project. Decided to move the instructions there to be able to split the instructions into pages for easier navigation. You can find the wiki [here](https://github.com/papallas/baxter_cashier/wiki).
