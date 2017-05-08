@@ -2,6 +2,8 @@
 
 This is a Final Year Project done at the University of Leeds. Should you use any of the ideas, code, images or any other material found in this repository should be reference the original author which is "The University of Leeds" and "Rafael Papalas".
 
+## Two videos demonstrating the project
+
 [![Demo](https://img.youtube.com/vi/dUGXIO3NPXM/0.jpg)](https://www.youtube.com/watch?v=dUGXIO3NPXM)
 [![Details](https://img.youtube.com/vi/3DlCj9DgiZA/0.jpg)](https://www.youtube.com/watch?v=3DlCj9DgiZA)
 
@@ -18,6 +20,7 @@ Finally, the project was developed with Ubuntu 14.04 (LTS), ROS Indigo and Pytho
 
 ![Baxter](https://cloud.githubusercontent.com/assets/6514550/23082358/ef6cd810-f550-11e6-9088-c54a4a1f7a3b.png)
 
+![Project in pictures](https://github.com/papallas/baxter_cashier/blob/master/img/project_explanation.png)
 
 
 1 Table of Contents
