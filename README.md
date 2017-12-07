@@ -2,6 +2,18 @@
 
 This is a Final Year Project done at the University of Leeds. Should you use any of the ideas, code, images or any other material found in this repository should be reference the original author which is "The University of Leeds" and "Rafael Papallas".
 
+**LaTeX Reference:**
+```latex
+@misc{papallas17fyp,
+  author         = {Rafael Papallas},
+  title          = {{Human-Robot Interaction for Cashier Robot}},
+  submissiondate = {2017/05/09},
+  year           = {2017},
+  url            = {{https://github.com/papallas/baxter\_cashier}},
+  note           = {School of Computing, The University of Leeds}
+}
+```
+
 Table of Contents
 ====================
 
