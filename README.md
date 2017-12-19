@@ -1,3 +1,5 @@
+![Baxter Demo](img/demo.gif "Baxter Demo")
+
 © 2016/2017 The University of Leeds and Rafael Papallas
 
 This is a Final Year Project done at the University of Leeds. Should you use any of the ideas, code, images or any other material found in this repository should be reference the original author which is "The University of Leeds" and "Rafael Papallas".
