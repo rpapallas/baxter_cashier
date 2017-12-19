@@ -1,4 +1,6 @@
+<p align="center">
 ![Baxter Demo](img/demo.gif "Baxter Demo")
+</p>
 
 © 2016/2017 The University of Leeds and Rafael Papallas
 
